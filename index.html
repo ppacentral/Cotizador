@@ -1,0 +1,2774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cotizador PPA Central v9</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ng:#060606;--g1:#0F0F0F;--g2:#161616;--g3:#202020;--g4:#2A2A2A;--g5:#383838;
+  --naranja:#E85C00;--naranja2:#FF6B00;--naranja3:#FF8C3A;
+  --blanco:#FFFFFF;--blanco2:#E8E4DC;--gtxt:#666;--gtxt2:#999;
+  --verde:#22C55E;--azul:#3B82F6;--dorado:#F59E0B;--rojo:#981E32;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--ng);}
+body{font-family:'Barlow',sans-serif;color:var(--blanco);display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--g1);border-bottom:1px solid var(--g4);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:10;}
+.tl-left{display:flex;align-items:center;gap:10px;}
+.tl-logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--naranja),#8B2800);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;color:#fff;letter-spacing:-1px;box-shadow:0 2px 8px rgba(232,92,0,.4);}
+.tl-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:.5px;}
+.tl-sub{font-size:8px;color:var(--gtxt);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
+.tl-right{display:flex;gap:7px;align-items:center;}
+.cloud-dot{width:7px;height:7px;border-radius:50%;background:var(--gtxt2);margin-right:2px;transition:background .3s;}
+.cloud-dot.ok{background:var(--verde);}
+.cloud-dot.err{background:#EF4444;}
+.consec-badge{background:var(--naranja);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;padding:4px 10px;border-radius:20px;letter-spacing:.5px;}
+.price-toggle{display:flex;background:var(--g3);border:1px solid var(--g4);border-radius:20px;overflow:hidden;}
+.pt-btn{padding:4px 9px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;color:var(--gtxt);transition:all .2s;border:none;background:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;}
+.pt-btn.active{background:var(--naranja);color:#fff;}
+.btn-icon{background:var(--g3);border:1px solid var(--g4);border-radius:7px;padding:5px 9px;color:var(--gtxt);font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;}
+.btn-icon:hover{border-color:var(--naranja);color:var(--naranja);}
+
+/* ── STEPS ── */
+.steps{display:flex;background:var(--g1);border-bottom:1px solid var(--g4);flex-shrink:0;}
+.step{flex:1;padding:8px 3px;text-align:center;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;}
+.step.active{border-bottom-color:var(--naranja);}
+.step.done{border-bottom-color:var(--verde);}
+.step-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;color:var(--gtxt);transition:color .2s;}
+.step.active .step-num{color:var(--naranja);}
+.step.done .step-num{color:var(--verde);}
+.step-lbl{font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:var(--gtxt);margin-top:1px;}
+.step.active .step-lbl,.step.done .step-lbl{color:var(--blanco2);}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.panel{display:none;padding:14px;}
+.panel.active{display:block;}
+
+/* ── FORM ── */
+.flabel{display:block;margin-bottom:4px;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--naranja);}
+.finput,.fselect,.ftextarea{width:100%;background:var(--g2);border:1px solid var(--g4);border-radius:8px;color:var(--blanco);font-family:'Barlow',sans-serif;font-size:14px;padding:10px 13px;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--naranja);}
+.fselect option{background:var(--g1);}
+.ftextarea{resize:vertical;min-height:62px;}
+.fgroup{margin-bottom:12px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sec-t{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gtxt);border-left:3px solid var(--naranja);padding-left:8px;margin:16px 0 10px;}
+
+/* SEGMENTOS */
+.seg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.seg-btn{border:none;border-radius:12px;padding:18px 14px;cursor:pointer;text-align:left;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;}
+.seg-btn:hover{transform:scale(1.02);box-shadow:0 6px 16px rgba(0,0,0,.3);}
+.seg-btn.sel{box-shadow:0 0 0 2px var(--naranja),0 6px 14px rgba(0,0,0,.25);}
+.seg-label{font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.6);text-transform:uppercase;}
+.seg-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:19px;color:#fff;margin-top:3px;line-height:1.15;}
+.seg-desc{font-size:10px;color:rgba(255,255,255,.75);margin-top:5px;}
+.seg-icon{position:absolute;right:10px;bottom:8px;font-size:28px;opacity:.18;}
+
+/* ASESORES */
+.asesores-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.asesor-card{background:var(--g2);border:1px solid var(--g4);border-radius:10px;padding:10px;cursor:pointer;transition:all .2s;text-align:center;position:relative;}
+.asesor-card:hover{border-color:var(--naranja);}
+.asesor-card.selected{border-color:var(--naranja2);background:rgba(232,92,0,.1);}
+.asesor-sel-dot{position:absolute;top:6px;right:6px;width:16px;height:16px;background:var(--verde);border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
+.asesor-card.selected .asesor-sel-dot{opacity:1;}
+.asesor-foto{width:48px;height:48px;border-radius:50%;margin:0 auto 7px;background:var(--g3);border:2px solid var(--g4);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;}
+.asesor-foto img{width:100%;height:100%;object-fit:cover;}
+.asesor-card.selected .asesor-foto{border-color:var(--naranja);}
+.asesor-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;}
+.asesor-cargo{font-size:9px;color:var(--gtxt);margin-top:2px;}
+
+/* FOTO FACHADA */
+.foto-zone{background:var(--g2);border:1px dashed var(--g5);border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.foto-drop{padding:20px;text-align:center;cursor:pointer;}
+.foto-drop input{display:none;}
+.foto-drop-icon{font-size:28px;margin-bottom:6px;}
+.foto-drop-txt{font-size:12px;color:var(--gtxt);}
+.foto-drop-sub{font-size:10px;color:var(--gtxt2);margin-top:3px;}
+#foto-prev-img{width:100%;max-height:130px;object-fit:cover;display:none;}
+
+/* EQUIPOS */
+.tipo-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+.tipo-chip{background:var(--g2);border:1px solid var(--g4);border-radius:8px;padding:8px 13px;cursor:pointer;transition:all .2s;text-align:center;}
+.tipo-chip:hover{border-color:var(--naranja3);}
+.tipo-chip.sel{border-color:var(--naranja);background:rgba(232,92,0,.12);}
+.tipo-chip-icon{font-size:18px;margin-bottom:3px;}
+.tipo-chip-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--blanco);}
+.tipo-chip-sub{font-size:9px;color:var(--gtxt);margin-top:1px;}
+/* Ficha técnica del tipo seleccionado */
+.tipo-ficha{background:var(--g2);border:1px solid var(--g4);border-radius:8px;padding:10px 13px;margin-bottom:12px;display:none;}
+.tipo-ficha.vis{display:block;}
+.tipo-ficha-titulo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--naranja);margin-bottom:7px;}
+.tipo-specs{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.tipo-spec{background:var(--g3);border-radius:6px;padding:7px 9px;}
+.tipo-spec-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gtxt);margin-bottom:2px;}
+.tipo-spec-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--blanco);}
+.tipo-spec-val.ok{color:var(--verde);}
+.tipo-spec-val.warn{color:var(--dorado);}
+/* Cards equipo */
+.eq-card{background:var(--g2);border:1px solid var(--g4);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;position:relative;transition:all .2s;display:grid;grid-template-columns:60px 1fr;gap:10px;align-items:start;}
+.eq-card:hover{border-color:var(--naranja3);}
+.eq-card.selected{border-color:var(--naranja2);background:rgba(232,92,0,.08);}
+.eq-sel-badge{position:absolute;top:8px;right:8px;background:var(--verde);color:#000;font-size:8px;font-weight:800;padding:2px 8px;border-radius:10px;letter-spacing:1px;text-transform:uppercase;opacity:0;transition:opacity .2s;}
+.eq-card.selected .eq-sel-badge{opacity:1;}
+.eq-img-box{width:60px;height:60px;background:var(--g3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.eq-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;line-height:1.2;margin-bottom:5px;}
+.eq-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.tag{font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:2px 7px;border-radius:20px;}
+.tag-n{background:rgba(232,92,0,.18);color:var(--naranja2);}
+.tag-a{background:rgba(245,158,11,.15);color:var(--dorado);}
+.tag-v{background:rgba(59,130,246,.15);color:var(--azul);}
+.tag-r{background:rgba(34,197,94,.12);color:var(--verde);}
+.eq-precio-box{display:flex;align-items:baseline;gap:8px;}
+.eq-precio-final{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;color:var(--blanco);}
+.eq-precio-inst{font-size:10px;color:var(--gtxt);font-weight:600;}
+.eq-sku{font-size:9px;color:var(--gtxt2);margin-top:4px;}
+.eq-nota{font-size:11px;color:var(--dorado);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px 10px;margin:8px 0;display:none;}
+/* Recomendación inteligente */
+.eq-rec{background:rgba(232,92,0,.08);border:1px solid rgba(232,92,0,.2);border-radius:6px;padding:7px 10px;margin-bottom:10px;font-size:11px;color:var(--naranja3);display:none;}
+.eq-rec.vis{display:block;}
+
+/* ── MOTOR DE PREGUNTAS GUIADAS v9.5 ── */
+.guia-progress{display:flex;gap:4px;margin-bottom:16px;}
+.guia-dot{flex:1;height:3px;border-radius:2px;background:var(--g4);transition:background .3s;}
+.guia-dot.done{background:var(--verde);}
+.guia-dot.active{background:var(--naranja);}
+.guia-pregunta{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;line-height:1.1;color:var(--blanco);margin-bottom:4px;}
+.guia-sub{font-size:11px;color:var(--gtxt);margin-bottom:14px;line-height:1.5;}
+.guia-opciones{display:grid;gap:8px;margin-bottom:4px;}
+.guia-opciones.col2{grid-template-columns:1fr 1fr;}
+.guia-opt{background:var(--g2);border:1px solid var(--g4);border-radius:10px;padding:11px 13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.guia-opt:hover{border-color:var(--naranja3);}
+.guia-opt.sel{border-color:var(--naranja);background:rgba(232,92,0,.1);}
+.guia-opt-icon{font-size:20px;flex-shrink:0;}
+.guia-opt-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--blanco);}
+.guia-opt-sub{font-size:9px;color:var(--gtxt);margin-top:2px;}
+.guia-input{width:100%;background:var(--g2);border:1px solid var(--g4);border-radius:8px;color:var(--blanco);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:4px;}
+.guia-input:focus{border-color:var(--naranja);}
+.guia-input-unit{font-size:9px;color:var(--gtxt);text-align:right;margin-bottom:10px;}
+/* Resultado motor */
+.motor-card{background:var(--g2);border:1px solid var(--g4);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative;}
+.motor-card:hover{border-color:var(--naranja3);}
+.motor-card.sel{border-color:var(--naranja);background:rgba(232,92,0,.08);}
+.motor-rank{display:inline-block;font-size:8px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:5px;}
+.rank-1{background:var(--naranja);color:#fff;}
+.rank-2{background:var(--g4);color:var(--blanco2);}
+.rank-3{background:var(--g3);color:var(--gtxt);}
+.motor-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;margin-bottom:4px;}
+.motor-razon{font-size:10px;color:var(--gtxt);line-height:1.5;margin-bottom:6px;}
+.motor-razon strong{color:var(--naranja3);}
+.motor-precio{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--naranja);}
+/* Alerta visita */
+.visita-alert{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 13px;margin:10px 0;}
+.visita-t{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9px;letter-spacing:1.5px;color:var(--dorado);text-transform:uppercase;margin-bottom:4px;}
+.visita-p{font-size:10px;color:#999;line-height:1.6;}
+.visita-p strong{color:var(--blanco);}
+/* Búsqueda manual */
+.busqueda-input{width:100%;background:var(--g2);border:1px solid var(--g4);border-radius:8px;color:var(--blanco);font-family:'Barlow',sans-serif;font-size:13px;padding:9px 13px;outline:none;margin-top:6px;}
+.busqueda-input:focus{border-color:var(--naranja);}
+.busqueda-item{background:var(--g3);border-radius:6px;padding:8px 11px;margin-bottom:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .15s;}
+.busqueda-item:hover{background:rgba(232,92,0,.1);}
+.busqueda-nombre{font-size:12px;font-weight:600;}
+.busqueda-sku{font-size:9px;color:var(--gtxt);}
+.busqueda-precio{font-size:12px;color:var(--naranja);font-weight:700;white-space:nowrap;}
+/* Acordeón accesorios */
+.acc-acordeon{background:var(--g2);border:1px solid var(--g4);border-radius:8px;margin-bottom:6px;overflow:hidden;}
+.acc-acordeon-header{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;cursor:pointer;transition:background .15s;}
+.acc-acordeon-header:hover{background:var(--g3);}
+.acc-acordeon.obligatorio .acc-acordeon-header{border-left:3px solid var(--naranja);}
+.acc-acordeon-titulo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:.5px;}
+.acc-acordeon-meta{display:flex;align-items:center;gap:7px;}
+.acc-badge-count{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--naranja);color:#fff;}
+.acc-badge-0{background:var(--g4);color:var(--gtxt);}
+.acc-badge-oblig{background:rgba(232,92,0,.2);color:var(--naranja);border:1px solid rgba(232,92,0,.3);}
+.acc-chevron{font-size:10px;color:var(--gtxt);transition:transform .2s;}
+.acc-acordeon.open .acc-chevron{transform:rotate(180deg);}
+.acc-acordeon-body{display:none;padding:0 8px 8px;}
+.acc-acordeon.open .acc-acordeon-body{display:block;}
+
+/* ACCESORIOS */
+.acc-group{margin-bottom:14px;}
+.acc-group-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gtxt);margin-bottom:7px;}
+.acc-item{background:var(--g2);border:1px solid var(--g4);border-radius:8px;padding:9px 11px;margin-bottom:6px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:9px;}
+.acc-item:hover{border-color:var(--g5);}
+.acc-item.on{border-color:var(--naranja);background:rgba(232,92,0,.07);}
+.acc-item.sug{border-color:rgba(232,92,0,.35);background:rgba(232,92,0,.04);}
+.acc-item.oblig{border-color:rgba(232,92,0,.4);}
+.acc-check{font-size:14px;flex-shrink:0;}
+.acc-nom{font-size:12px;font-weight:600;flex:1;}
+.acc-pre{font-size:10px;color:var(--gtxt);white-space:nowrap;}
+.acc-qty-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.acc-qty-btn{width:24px;height:24px;border:1px solid var(--g5);border-radius:5px;background:var(--g3);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blanco);transition:all .15s;line-height:1;}
+.acc-qty-btn:hover{background:var(--naranja);border-color:var(--naranja);}
+.acc-qty-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;width:24px;text-align:center;}
+.acc-qty-subt{font-size:11px;color:var(--naranja);font-weight:700;margin-left:4px;}
+
+
+/* PROPUESTA */
+.prop-hero{background:linear-gradient(150deg,#1C0500 0%,#250700 40%,var(--ng) 100%);position:relative;overflow:hidden;}
+.prop-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 92% 50%,rgba(232,92,0,.2) 0%,transparent 70%);}
+.prop-hero::after{content:'PPA';position:absolute;right:-8px;top:-18px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:100px;color:rgba(255,255,255,.04);letter-spacing:-4px;pointer-events:none;}
+.ph-inner{padding:22px 20px 0;position:relative;z-index:1;}
+.ph-consec{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--naranja);margin-bottom:5px;font-weight:600;}
+.ph-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:32px;line-height:.95;text-transform:uppercase;letter-spacing:-1px;}
+.ph-title span{color:var(--naranja);}
+.ph-sub{font-size:11px;color:var(--gtxt);margin-top:5px;font-weight:300;}
+.ph-bar{display:grid;grid-template-columns:1fr 1fr;padding:14px 20px 20px;border-top:1px solid rgba(255,255,255,.07);margin-top:16px;position:relative;z-index:1;}
+.phb-lbl{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--gtxt);margin-bottom:2px;}
+.phb-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;}
+.phb-sub{font-size:9px;color:var(--gtxt);margin-top:1px;}
+.prop-fachada{width:100%;max-height:150px;object-fit:cover;display:none;}
+.prop-fachada.vis{display:block;}
+.prop-body{padding:16px;}
+.inst-badge{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:6px;padding:7px 11px;margin-bottom:11px;font-size:11px;color:#FCD34D;display:none;}
+.inst-badge.vis{display:block;}
+.prop-asesor-box{display:flex;align-items:center;gap:11px;background:var(--g3);border-radius:8px;padding:10px;margin-bottom:14px;}
+.pa-foto{width:42px;height:42px;border-radius:50%;background:var(--g4);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid var(--naranja);flex-shrink:0;}
+.pa-foto img{width:100%;height:100%;object-fit:cover;}
+.pa-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;}
+.pa-cargo{font-size:9px;color:var(--gtxt);margin-top:1px;}
+.pa-empresa{font-size:9px;color:var(--naranja);margin-top:2px;font-weight:600;}
+.prop-aida{border-left:3px solid var(--naranja);padding:13px 15px;background:linear-gradient(90deg,rgba(232,92,0,.07) 0%,transparent 100%);margin-bottom:14px;border-radius:0 8px 8px 0;}
+.pa-q{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;line-height:1.1;margin-bottom:7px;}
+.pa-p{font-size:12px;color:#AAA;line-height:1.7;}
+.pa-p strong{color:var(--blanco);}
+.prop-eq-card{background:var(--g3);border-radius:8px;overflow:hidden;margin-bottom:13px;display:grid;grid-template-columns:80px 1fr;}
+.peq-img{width:80px;height:78px;background:var(--g4);display:flex;align-items:center;justify-content:center;font-size:28px;}
+.peq-img img{width:100%;height:100%;object-fit:cover;}
+.peq-info{padding:10px 12px;}
+.peq-nombre{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;text-transform:uppercase;line-height:1.1;}
+.peq-tec{display:inline-block;background:rgba(232,92,0,.15);color:var(--naranja2);font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:20px;margin:4px 0;}
+.peq-desc{font-size:10px;color:var(--gtxt);line-height:1.4;}
+.peq-desc strong{color:var(--naranja3);}
+.prop-sec{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--gtxt);margin:12px 0 7px;}
+.prop-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--g4);}
+.prop-row:last-child{border-bottom:none;}
+.prn{font-size:12px;font-weight:600;}
+.prsku{font-size:8px;color:var(--gtxt);margin-top:1px;}
+.prp{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;white-space:nowrap;}
+.prop-total{background:var(--naranja);border-radius:9px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin:12px 0;}
+.ptl{font-size:8px;letter-spacing:3px;text-transform:uppercase;opacity:.85;}
+.pts{font-size:8px;opacity:.65;margin-top:2px;}
+.ptm{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;}
+.prop-ventaja{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:8px;padding:11px 13px;margin-bottom:11px;}
+.pvt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1px;color:#4ADE80;text-transform:uppercase;margin-bottom:4px;}
+.pvp{font-size:11px;color:#888;line-height:1.6;}
+.pvp strong{color:#4ADE80;}
+.prop-ssg{background:linear-gradient(135deg,rgba(232,92,0,.07) 0%,rgba(255,107,0,.03) 100%);border:1px solid rgba(232,92,0,.18);border-radius:8px;padding:14px;margin-bottom:12px;}
+.ssg-t{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;margin-bottom:10px;}
+.ssg-items{display:flex;flex-direction:column;gap:9px;}
+.ssg-item{display:flex;align-items:flex-start;gap:9px;font-size:11px;color:#888;line-height:1.6;}
+.ssg-dot{width:20px;height:20px;border-radius:50%;background:var(--naranja);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-top:2px;}
+.ssg-item strong{color:var(--blanco);}
+.prop-pend{background:var(--g3);border:1px solid var(--g4);border-radius:8px;padding:11px;margin-bottom:11px;}
+.ppt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--naranja);margin-bottom:9px;}
+.pi{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--g4);font-size:11px;color:#BBB;}
+.pi:last-child{border-bottom:none;}
+.pd{width:14px;height:14px;border-radius:50%;background:rgba(232,92,0,.15);border:1px solid rgba(232,92,0,.3);display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--naranja);flex-shrink:0;}
+.prop-firma{display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--g4);padding-top:12px;margin-top:4px;}
+.pf-empresa{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:17px;color:var(--naranja);}
+.pf-datos{font-size:9px;color:var(--gtxt);line-height:1.8;margin-top:3px;}
+.pf-datos a{color:var(--naranja);text-decoration:none;}
+.pf-soy{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:var(--naranja);text-align:right;}
+.pf-sub{font-size:9px;color:var(--gtxt);text-align:right;line-height:1.7;margin-top:2px;}
+
+/* BOTONES ACCIÓN */
+.btn-wa{display:block;width:100%;background:var(--naranja);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:.5px;cursor:pointer;margin-top:14px;transition:all .2s;}
+.btn-wa:hover{background:var(--naranja2);}
+.btn-wa:disabled{opacity:.5;}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.btn-sec{background:var(--g3);color:var(--blanco);border:1px solid var(--g4);border-radius:8px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:.5px;cursor:pointer;transition:all .2s;text-align:center;}
+.btn-sec:hover{border-color:var(--naranja);color:var(--naranja);}
+.btn-sec.act{background:var(--g3);border-color:var(--verde);color:var(--verde);}
+
+/* LINK BOX */
+.link-box{background:var(--g2);border:1px solid var(--g4);border-radius:8px;padding:11px 13px;margin-top:8px;display:none;}
+.lb-lbl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--gtxt);margin-bottom:5px;}
+.lb-url{font-size:11px;color:var(--naranja);word-break:break-all;font-family:monospace;margin-bottom:9px;}
+.lb-btns{display:flex;gap:7px;}
+.lb-btn{flex:1;background:var(--g3);border:1px solid var(--g4);border-radius:6px;padding:7px;font-size:10px;font-weight:700;color:var(--blanco);cursor:pointer;text-align:center;transition:all .15s;}
+.lb-btn:hover{border-color:var(--naranja);color:var(--naranja);}
+
+/* HISTORIAL OVERLAY */
+.hist-ov{position:fixed;inset:0;background:var(--g1);z-index:100;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-width:480px;margin:0 auto;}
+.hist-ov.open{transform:translateX(0);}
+.hist-head{background:var(--g2);border-bottom:1px solid var(--g4);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hist-head-t{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;}
+.hist-close{background:none;border:none;color:var(--gtxt);font-size:20px;cursor:pointer;padding:4px;}
+.hist-sync{background:var(--g3);border:1px solid var(--g4);border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;color:var(--gtxt);cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase;}
+.hist-sync:hover{border-color:var(--naranja);color:var(--naranja);}
+.hist-list{flex:1;overflow-y:auto;padding:12px;}
+.hist-empty{text-align:center;padding:36px;color:var(--gtxt);font-size:13px;}
+.hist-item{background:var(--g2);border:1px solid var(--g4);border-radius:9px;padding:11px;margin-bottom:8px;}
+.hi-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.hi-consec{font-size:9px;color:var(--naranja);font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.hi-cliente{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;}
+.hi-total{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--naranja);}
+.hi-mid{font-size:10px;color:var(--gtxt2);margin-top:3px;}
+.hi-bot{display:flex;justify-content:space-between;margin-top:7px;font-size:9px;color:var(--gtxt);}
+.hi-seg{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;color:#fff;margin-top:4px;}
+.hi-del{background:none;border:none;color:var(--gtxt);font-size:12px;cursor:pointer;padding:3px;transition:color .2s;}
+.hi-del:hover{color:#EF4444;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--verde);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;padding:8px 18px;border-radius:30px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-track{background:var(--ng);}
+::-webkit-scrollbar-thumb{background:var(--naranja);border-radius:1px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tl-left">
+    <div class="tl-logo">PC</div>
+    <div>
+      <div class="tl-title">Cotizador PPA</div>
+      <div class="tl-sub">PPA Central · v9</div>
+    </div>
+  </div>
+  <div class="tl-right">
+    <span class="cloud-dot" id="cloudDot" title="Estado nube"></span>
+    <div class="price-toggle">
+      <button class="pt-btn active" id="pt-final" onclick="setLista('final')">Final</button>
+      <button class="pt-btn" id="pt-inst" onclick="setLista('inst')">Inst.</button>
+    </div>
+    <div class="consec-badge" id="consecBadge">WEB-PPA-0001</div>
+    <button class="btn-icon" onclick="abrirHist()">📋</button>
+  </div>
+</div>
+
+<!-- STEPS -->
+<div class="steps">
+  <div class="step active" id="s1" onclick="goStep(1)"><div class="step-num">①</div><div class="step-lbl">Cliente</div></div>
+  <div class="step" id="s2" onclick="goStep(2)"><div class="step-num">②</div><div class="step-lbl">Equipo</div></div>
+  <div class="step" id="s3" onclick="goStep(3)"><div class="step-num">③</div><div class="step-lbl">Extras</div></div>
+  <div class="step" id="s4" onclick="goStep(4)"><div class="step-num">④</div><div class="step-lbl">Propuesta</div></div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ── PASO 1: CLIENTE ── -->
+<div class="panel active" id="p1">
+
+  <div class="sec-t">Datos del cliente</div>
+  <div class="fgroup">
+    <label class="flabel">Nombre completo</label>
+    <input class="finput" id="c-nombre" type="text" placeholder="Nombre del cliente">
+  </div>
+  <div class="row2">
+    <div class="fgroup">
+      <label class="flabel">Teléfono / WhatsApp</label>
+      <input class="finput" id="c-tel" type="tel" placeholder="3XXXXXXXXX">
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Departamento</label>
+      <select class="fselect" id="c-depto" onchange="cargarMunicipios()">
+        <option value="">Seleccione…</option>
+        <option>Amazonas</option><option>Antioquia</option><option>Arauca</option>
+        <option>Atlántico</option><option>Bolívar</option><option>Boyacá</option>
+        <option>Caldas</option><option>Caquetá</option><option>Casanare</option>
+        <option>Cauca</option><option>Cesar</option><option>Chocó</option>
+        <option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option>
+        <option>Guaviare</option><option>Huila</option><option>La Guajira</option>
+        <option>Magdalena</option><option>Meta</option><option>Nariño</option>
+        <option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option>
+        <option>Risaralda</option><option>San Andrés</option><option>Santander</option>
+        <option>Sucre</option><option>Tolima</option><option>Valle del Cauca</option>
+        <option>Vaupés</option><option>Vichada</option>
+      </select>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Ciudad / Municipio</label>
+      <select class="fselect" id="c-ciudad">
+        <option value="">Seleccione departamento…</option>
+      </select>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="fgroup">
+      <label class="flabel">Tipo de propiedad</label>
+      <select class="fselect" id="c-tipo">
+        <option value="Residencia">Residencia</option>
+        <option value="Conjunto Residencial">Conjunto Residencial</option>
+        <option value="Local Comercial">Local Comercial</option>
+        <option value="Empresa">Empresa</option>
+        <option value="Bodega">Bodega</option>
+        <option value="Planta Industrial">Planta Industrial</option>
+      </select>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Dirección / referencia</label>
+      <input class="finput" id="c-dir" type="text" placeholder="Barrio, sector…">
+    </div>
+  </div>
+  <div class="fgroup">
+    <label class="flabel">Observaciones</label>
+    <textarea class="ftextarea" id="c-obs" placeholder="Notas técnicas, condiciones, garantías…"></textarea>
+  </div>
+
+  <div class="sec-t">Asesor responsable</div>
+  <div class="asesores-grid" id="asesores-grid"></div>
+
+  <div class="sec-t">Foto de la fachada (opcional)</div>
+  <div class="foto-zone">
+    <div class="foto-drop" onclick="document.getElementById('fotoInput').click()">
+      <input type="file" id="fotoInput" accept="image/*" onchange="prevFoto(this)">
+      <div class="foto-drop-icon">📷</div>
+      <div class="foto-drop-txt">Toca para subir foto</div>
+      <div class="foto-drop-sub">JPG, PNG · Opcional</div>
+    </div>
+    <img id="foto-prev-img" src="" alt="Fachada">
+  </div>
+
+  <button class="btn-wa" onclick="goStep(2)">Continuar → Seleccionar Equipo</button>
+</div>
+
+<!-- ── PASO 2: MOTOR DE PREGUNTAS GUIADAS ── -->
+<div class="panel" id="p2">
+
+  <!-- Selección de camino — aparece primero -->
+  <div id="guia-camino-sel">
+    <div class="guia-pregunta">¿Qué necesita hoy?</div>
+    <div class="guia-sub">Seleccione el camino para esta cotización.</div>
+    <div class="guia-opciones" style="margin-bottom:8px">
+      <div class="guia-opt" onclick="selCamino('automatizar')">
+        <div class="guia-opt-icon">🚗</div>
+        <div><div class="guia-opt-lbl">Automatizar una puerta</div><div class="guia-opt-sub">Motor guiado · Recomendación inteligente</div></div>
+      </div>
+      <div class="guia-opt" onclick="selCamino('accesorios')">
+        <div class="guia-opt-icon">🔧</div>
+        <div><div class="guia-opt-lbl">Accesorios y repuestos</div><div class="guia-opt-sub">Centrales · Controles · Cremalleras · Protección</div></div>
+      </div>
+      <div class="guia-opt" onclick="selCamino('seguridad')">
+        <div class="guia-opt-icon">📷</div>
+        <div><div class="guia-opt-lbl">Seguridad y cámaras</div><div class="guia-opt-sub">CCTV · Alarmas · Control de acceso · Domótica</div></div>
+      </div>
+    </div>
+    <button class="btn-sec" style="margin-top:4px" onclick="goStep(1)">← Volver al cliente</button>
+  </div>
+
+  <!-- Motor de preguntas — camino automatizar -->
+  <div id="guia-motor" style="display:none">
+    <div class="guia-progress" id="guia-progress"></div>
+    <div id="guia-pantalla"></div>
+    <div id="motor-resultado" style="display:none">
+      <div class="sec-t">⭐ Recomendaciones para su caso</div>
+      <div id="motor-cards"></div>
+      <div class="visita-alert">
+        <div class="visita-t">📋 Visita técnica obligatoria</div>
+        <div class="visita-p">
+          Esta propuesta incluye los <strong>equipos recomendados</strong>. Para confirmar la instalación es necesaria una visita en sitio para verificar dimensiones, peso real y condiciones eléctricas.<br><br>
+          <strong>No incluido:</strong> mano de obra · cableado · obra civil · ornamentación · materiales de instalación.<br>
+          Su asesor coordinará la visita con nuestro <strong>técnico certificado</strong>.
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="sec-t">¿El motor recomendado no es el correcto?</div>
+        <div style="font-size:10px;color:var(--gtxt);margin-bottom:6px">Escriba el nombre del equipo — por ejemplo: <em>stark, industrial, barrera, liger, cademex</em></div>
+        <input class="busqueda-input" id="busqueda-input" type="text"
+          placeholder="Buscar equipo por nombre…"
+          oninput="buscarProducto(this.value)">
+        <div id="busqueda-resultados" style="margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:12px" id="guia-nav">
+      <button class="btn-sec" onclick="guiaAnterior()">← Anterior</button>
+      <button class="btn-wa" style="margin-top:0" onclick="guiaSiguiente()">Siguiente →</button>
+    </div>
+    <button class="btn-sec" style="margin-top:8px" onclick="volverCamino()">← Cambiar camino</button>
+  </div>
+
+  <!-- Catálogo directo — camino accesorios y seguridad -->
+  <div id="guia-catalogo" style="display:none">
+    <div class="sec-t" id="catalogo-titulo"></div>
+    <div style="font-size:10px;color:var(--gtxt);margin-bottom:10px" id="catalogo-sub"></div>
+    <div id="catalogo-grupos"></div>
+    <button class="btn-wa" onclick="irAcAbiertoDesde('catalogo')">Continuar → Accesorios</button>
+    <button class="btn-sec" style="margin-top:8px" onclick="volverCamino()">← Cambiar camino</button>
+  </div>
+
+</div>
+
+<!-- ── PASO 3: ACCESORIOS (Acordeón inteligente) ── -->
+<div class="panel" id="p3">
+  <div class="sec-t" id="acc-seg-hint"></div>
+  <div id="acc-acordeones"></div>
+  <button class="btn-wa" onclick="generarProp()">🚀 Generar Propuesta</button>
+  <button class="btn-sec" style="margin-top:8px;" onclick="goStep(2)">← Volver</button>
+</div>
+
+<!-- ── PASO 4: PROPUESTA ── -->
+<div class="panel" id="p4">
+  <div id="p4-content" style="display:none">
+
+    <div class="prop-hero">
+      <div class="ph-inner">
+        <div class="ph-consec" id="ph-consec">WEB-PPA-0001 · PPA Central</div>
+        <div class="ph-title">Automatización<br><span>de Alta</span><br>Velocidad</div>
+        <div class="ph-sub" id="ph-sub">Tecnología PPA</div>
+      </div>
+      <div class="ph-bar">
+        <div><div class="phb-lbl">Cliente</div><div class="phb-val" id="ph-cliente">—</div><div class="phb-sub" id="ph-tipo">—</div></div>
+        <div style="text-align:right"><div class="phb-lbl">Ubicación</div><div class="phb-val" id="ph-ciudad">—</div><div class="phb-sub" id="ph-fecha">—</div></div>
+      </div>
+    </div>
+
+    <img class="prop-fachada" id="prop-fachada" src="" alt="Fachada">
+
+    <div class="prop-body">
+      <div class="inst-badge" id="inst-badge">⚠ Lista precio instalador — NO compartir con cliente final</div>
+
+      <div class="prop-asesor-box" id="prop-asesor-box">
+        <div class="pa-foto" id="pa-foto-el">👤</div>
+        <div>
+          <div class="pa-nombre" id="pa-nombre-el">—</div>
+          <div class="pa-cargo" id="pa-cargo-el">—</div>
+          <div class="pa-empresa">PPA Central · Distribuidor Autorizado PPA</div>
+        </div>
+      </div>
+
+      <div class="prop-aida">
+        <div class="pa-q" id="pa-q"></div>
+        <div class="pa-p" id="pa-p"></div>
+      </div>
+
+      <div class="prop-eq-card">
+        <div class="peq-img" id="peq-img">🚪</div>
+        <div class="peq-info">
+          <div class="peq-nombre" id="peq-nombre"></div>
+          <span class="peq-tec" id="peq-tec"></span>
+          <div class="peq-desc" id="peq-desc"></div>
+        </div>
+      </div>
+
+      <div class="prop-sec">Equipamiento propuesto</div>
+      <div id="prop-rows"></div>
+
+      <div class="prop-total">
+        <div><div class="ptl">Total Equipos ★</div><div class="pts" id="pts-lista">PSVP · Referencia usuario final</div></div>
+        <div class="ptm" id="prop-total-num"></div>
+      </div>
+
+      <div class="prop-ventaja" id="prop-ventaja" style="display:none">
+        <div class="pvt" id="pvt"></div>
+        <div class="pvp" id="pvp"></div>
+      </div>
+
+      <div class="prop-ssg">
+        <div class="ssg-t">¿Por qué elegirnos?</div>
+        <div class="ssg-items" id="ssg-items"></div>
+      </div>
+
+      <div class="prop-pend">
+        <div class="ppt">📋 Le haremos llegar hoy mismo</div>
+        <div class="pi"><div class="pd">✓</div>Costo de mano de obra de instalación</div>
+        <div class="pi"><div class="pd">✓</div>Materiales eléctricos requeridos</div>
+        <div class="pi"><div class="pd">✓</div>Materiales de ornamentación si aplica</div>
+      </div>
+
+      <div class="prop-firma">
+        <div>
+          <div class="pf-empresa">PPA Central</div>
+          <div class="pf-datos">Distribuidor Autorizado PPA Latam<br>🌐 <a href="https://ppacentral.com">ppacentral.com</a> · 📱 @ppacentral<br>📞 +57 317 777 2 333<br>📍 Calle 11A #17-44 · Florencia, Caquetá</div>
+        </div>
+        <div>
+          <div class="pf-soy">#PPACentral</div>
+          <div class="pf-sub">Tu acceso a la mejor<br>tecnología PPA.<br>Siempre a tu servicio.</div>
+        </div>
+      </div>
+
+      <!-- ACCIONES ENVÍO -->
+      <button class="btn-wa" id="btn-pub" onclick="publicarYEnviar()">📲 Descargar y Enviar por WhatsApp</button>
+
+      <div class="link-box" id="link-box">
+        <div class="lb-lbl">📎 Cómo enviar al cliente</div>
+        <div style="font-size:12px;color:#ccc;line-height:1.7;margin-bottom:10px">
+          El archivo HTML ya se descargó. En WhatsApp adjúntelo desde Descargas.
+        </div>
+        <div class="lb-btns">
+          <button class="lb-btn" onclick="reenviarWA()">📲 Re-abrir WA</button>
+          <button class="lb-btn" onclick="verLink()">👁 Ver propuesta</button>
+          <button class="lb-btn" onclick="descargarHTML()">⬇ Re-descargar</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-sec" onclick="descargarHTML()">⬇ HTML</button>
+        <button class="btn-sec" onclick="imprimirPDF()">🖨 PDF</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-sec" onclick="nuevaCot()">+ Nueva</button>
+        <button class="btn-sec" onclick="goStep(1)">✏ Editar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="p4-vacia" style="text-align:center;padding:40px 20px;color:var(--gtxt)">
+    <div style="font-size:40px;margin-bottom:12px">📄</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;margin-bottom:6px">Sin propuesta activa</div>
+    <div style="font-size:13px">Completa los pasos anteriores y genera tu propuesta premium.</div>
+    <button class="btn-wa" style="margin-top:20px" onclick="goStep(1)">Crear cotización</button>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- HISTORIAL OVERLAY -->
+<div class="hist-ov" id="hist-ov">
+  <div class="hist-head">
+    <div class="hist-head-t">📋 Historial</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="hist-sync" onclick="syncCloud()">☁ Sincronizar</button>
+      <button class="hist-close" onclick="cerrarHist()">✕</button>
+    </div>
+  </div>
+  <div class="hist-list" id="hist-list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// JSONBIN CONFIG (del v8)
+// ══════════════════════════════════════
+// ══════════════════════════════════════
+// GOOGLE SHEETS — Fuente de precios en tiempo real
+// Actualiza precios por SKU al abrir el cotizador
+// Si Sheets no está disponible usa precios del código
+// ══════════════════════════════════════
+const SHEETS_ID  = '1qyDqL0Nj4K4La5zalvuqQCpM1VL10ecm';
+const SHEETS_URL = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/gviz/tq?tqx=out:json&sheet=Lista%20de%20Precios%20PPA%202025`;
+let preciosSheets = {};
+let sheetsOk = false;
+
+async function cargarPreciosSheets(){
+  try{
+    const res = await Promise.race([
+      fetch(SHEETS_URL),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
+    ]);
+    const txt = await res.text();
+    const match = txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+    if(!match) throw new Error('formato inesperado');
+    const json = JSON.parse(match[1]);
+    const rows = json?.table?.rows || [];
+    rows.forEach(row => {
+      const sku  = row.c?.[4]?.v;  // Columna E = SKU
+      const psvp = row.c?.[10]?.v; // Columna K = PSVP
+      if(sku && psvp && typeof psvp === 'number' && psvp > 0){
+        preciosSheets[String(sku).trim()] = psvp;
+      }
+    });
+    sheetsOk = Object.keys(preciosSheets).length > 0;
+    if(sheetsOk){
+      // Actualizar precios en catálogos en memoria
+      Object.values(EQUIPOS).flat().forEach(eq=>{
+        if(preciosSheets[eq.sku]) eq.p = preciosSheets[eq.sku];
+      });
+      Object.values(ACCS).flat().forEach(ac=>{
+        if(preciosSheets[ac.sku]) ac.p = preciosSheets[ac.sku];
+      });
+      const dot = document.getElementById('cloudDot');
+      if(dot){ dot.classList.add('ok'); dot.title=`✅ Precios Sheets · ${Object.keys(preciosSheets).length} SKUs`; }
+      console.log(`✅ Sheets: ${Object.keys(preciosSheets).length} precios cargados`);
+    }
+  } catch(e){
+    console.warn('Sheets no disponible — precios del código activos:', e.message);
+  }
+}
+
+// ══════════════════════════════════════
+// ASESORES
+// ══════════════════════════════════════
+const ASESORES = [
+  {id:'diego',   nombre:'Diego Oliveros',    cargo:'Director Comercial',      emoji:'⚙', foto:''},
+  {id:'vale',    nombre:'Valentina Oliveros', cargo:'Gerente General',         emoji:'📋', foto:''},
+  {id:'xime',    nombre:'Ximena Oliveros',   cargo:'Directora de Marca',      emoji:'🎨', foto:''},
+  {id:'asesor1', nombre:'Asesor 1',          cargo:'Asesor Comercial',        emoji:'🌟', foto:''},
+  {id:'asesorA', nombre:'Asesor A',          cargo:'Asesor Comercial',        emoji:'🔑', foto:''},
+];
+
+// ══════════════════════════════════════
+// CATÁLOGO EQUIPOS PPA
+// ══════════════════════════════════════
+const EQUIPOS = {
+  // ── CORREDIZAS RESIDENCIALES ──────────────────────────────────
+  corredera_res:[
+    {id:'dz-sh-m',   n:'DZ STARK HOME — Mono',        sku:'E02243104', tec:'MONO',              kg:400,  vel:'14 seg', v:'127V',   p:693000,   uso:'Residencial',          e:'🚗'},
+    {id:'dz-sh-jf',  n:'DZ STARK HOME — Jetflex',     sku:'E02252400', tec:'JETFLEX',           kg:450,  vel:'4 seg',  v:'Bivolt', p:1200000,  uso:'Residencial',          e:'🚗'},
+    {id:'dz-hub-m',  n:'DZ HUB — Mono',               sku:'E02130103', tec:'MONO',              kg:450,  vel:'13.5s',  v:'127V',   p:750000,   uso:'Residencial',          e:'🚗'},
+    {id:'dz-hub-l',  n:'DZ HUB — Legero',             sku:'E02213101', tec:'LEGERO',            kg:500,  vel:'6.5 seg',v:'Bivolt', p:800000,   uso:'Residencial',          e:'🚗'},
+    {id:'dz-st-m',   n:'DZ STARK — Mono',             sku:'E02244102', tec:'MONO',              kg:600,  vel:'13.5s',  v:'127V',   p:842000,   uso:'Residencial',          e:'🚗'},
+    {id:'dz-st-l',   n:'DZ STARK — Legero',           sku:'E02249102', tec:'LEGERO',            kg:500,  vel:'8.5 seg',v:'127V',   p:922000,   uso:'Residencial',          e:'🚗'},
+    {id:'dz-st-jf',  n:'DZ STARK — Jetflex',          sku:'E02253400', tec:'JETFLEX',           kg:650,  vel:'5.5 seg',v:'Bivolt', p:1402000,  uso:'Residencial',          e:'🚗'},
+    {id:'dz-rio-m',  n:'DZ RIO — Mono',               sku:'E02481005', tec:'MONO',              kg:700,  vel:'13.5s',  v:'127V',   p:1076000,  uso:'Res./Unidad Pequeña',  e:'🚗'},
+    {id:'dz-rio-jf', n:'DZ RIO — Jetflex',            sku:'E02514006', tec:'JETFLEX',           kg:800,  vel:'4.5 seg',v:'Bivolt', p:1655000,  uso:'Res./Unidad Pequeña',  e:'🚗'},
+    {id:'dz-rio-br', n:'DZ RIO — Jetflex Brushless',  sku:'E02111504', tec:'JETFLEX BRUSHLESS', kg:800,  vel:'5.5 seg',v:'Bivolt', p:1655000,  uso:'Res./Unidad Pequeña',  e:'⚡'},
+    {id:'dz-eu',     n:'DZ EURUS STEEL — Jetflex',    sku:'E02834001', tec:'JETFLEX',           kg:800,  vel:'4.5 seg',v:'Bivolt', p:1671000,  uso:'Res./Unidad Pequeña',  e:'🚗'},
+  ],
+  // ── CORREDIZAS SL SEMI-INDUSTRIAL ────────────────────────────
+  corredera_sl:[
+    {id:'sl-jf24',   n:'SL JETFLEX 24V',             sku:'E04107009', tec:'JETFLEX 24V',       kg:600,  vel:'2 seg',  v:'Bivolt', p:2231000,  uso:'Res./Comercial',       e:'🚗'},
+    {id:'sl-jf',     n:'SL JETFLEX Mono',            sku:'E04107003', tec:'JETFLEX',           kg:600,  vel:'12 seg', v:'110V',   p:1923000,  uso:'Res./Unidad',          e:'🚗'},
+    {id:'sl-leg-b',  n:'SL LEGERO Bivolt',           sku:'E04103005', tec:'LEGERO',            kg:600,  vel:'16 seg', v:'Bivolt', p:1615000,  uso:'Res./Unidad',          e:'🚗'},
+    {id:'sl-leg-1',  n:'SL LEGERO 127V',             sku:'E04103001', tec:'LEGERO',            kg:600,  vel:'16 seg', v:'127V',   p:1154000,  uso:'Res./Unidad',          e:'🚗'},
+    {id:'sl-br',     n:'SL BRUSHLESS',               sku:'E04199003', tec:'JETFLEX BRUSHLESS', kg:600,  vel:'2 seg',  v:'Bivolt', p:3077000,  uso:'Comercial/Ind.',       e:'⚡'},
+  ],
+  // ── CORREDIZAS INDUSTRIALES ───────────────────────────────────
+  corredera_ind:[
+    {id:'dz-ind-m1', n:'DZ INDUSTRIAL — Mono 1000kg',     sku:'E06281000', tec:'MONO',              kg:1000, vel:'13 seg', v:'127V',   p:1692000,  uso:'Industrial',           e:'🏭', badge:'INDUSTRIAL'},
+    {id:'dz-ind-jf', n:'DZ INDUSTRIAL — Jetflex 1000kg',  sku:'E06184003', tec:'JETFLEX',           kg:1000, vel:'5.5 seg',v:'Bivolt', p:2230000,  uso:'Industrial',           e:'🏭', badge:'INDUSTRIAL'},
+    {id:'dz-ind-jf2',n:'DZ INDUSTRIAL — Jetflex 1300kg',  sku:'E06684000', tec:'JETFLEX',           kg:1300, vel:'4.5 seg',v:'Bivolt', p:2384000,  uso:'Industrial',           e:'🏭', badge:'INDUSTRIAL'},
+    {id:'dz-ind-jf3',n:'DZ INDUSTRIAL — Jetflex 1500kg',  sku:'E06264001', tec:'JETFLEX',           kg:1500, vel:'4 seg',  v:'Bivolt', p:2616000,  uso:'Industrial',           e:'🏭', badge:'INDUSTRIAL'},
+    {id:'dz-ind-br', n:'DZ INDUSTRIAL — Brushless 2200kg',sku:'E06614002', tec:'JETFLEX BRUSHLESS', kg:2200, vel:'5 seg',  v:'Bivolt', p:2692000,  uso:'Industrial/Intensivo', e:'⚡', badge:'BRUSHLESS'},
+    {id:'dz-bru',    n:'DZ BRUTALLE — Jetflex 3000kg',    sku:'E06704002', tec:'JETFLEX',           kg:3000, vel:'7 seg',  v:'Bivolt', p:4450000,  uso:'Industrial Pesado',    e:'🏗', badge:'INDUSTRIAL'},
+  ],
+  // ── BATIENTES ─────────────────────────────────────────────────
+  batiente:[
+    {id:'pivo-sk-s1',  n:'PIVO SK Mono — 1 hoja Standar (2m)', sku:'E03481004', tec:'MONO',    kg:125, vel:'9.5 seg', v:'127V',   p:1153000, uso:'Residencial 1 hoja',  e:'🚪'},
+    {id:'pivo-sk-s2',  n:'PIVO SK Mono — 1 hoja Super (3m)',   sku:'E03481005', tec:'MONO',    kg:125, vel:'16.5s',  v:'127V',   p:1216000, uso:'Residencial 1 hoja',  e:'🚪'},
+    {id:'pivo-hm-s1',  n:'PIVO HOME — 1 hoja Standar (2m)',    sku:'E03414004 + A17818', tec:'JETFLEX', kg:125, vel:'2.5 seg', v:'Bivolt', p:1683000, uso:'Res. 1 hoja', e:'🚪'},
+    {id:'pivo-hm-s2',  n:'PIVO HOME — 1 hoja Super (3m)',      sku:'E03414004 + A17819', tec:'JETFLEX', kg:125, vel:'4.5 seg', v:'Bivolt', p:1771000, uso:'Res. 1 hoja', e:'🚪'},
+    {id:'pivo-sk-d1',  n:'PIVO SK Mono — Doble hoja Standar',  sku:'E03481000', tec:'MONO',    kg:125, vel:'9.5 seg', v:'127V',   p:1676000, uso:'Residencial 2 hojas', e:'🚪🚪'},
+    {id:'pivo-sk-d2',  n:'PIVO SK Mono — Doble hoja Super',    sku:'E03481001', tec:'MONO',    kg:125, vel:'16.5s',  v:'127V',   p:1800000, uso:'Residencial 2 hojas', e:'🚪🚪'},
+    {id:'pivo-hm-d1',  n:'PIVO HOME — Doble hoja Standar',     sku:'E03414005 + A17818', tec:'JETFLEX', kg:125, vel:'2.5 seg', v:'Bivolt', p:2495000, uso:'Res. 2 hojas', e:'🚪🚪'},
+    {id:'pivo-hm-d2',  n:'PIVO HOME — Doble hoja Super',       sku:'E03414005 + A17819', tec:'JETFLEX', kg:125, vel:'4.5 seg', v:'Bivolt', p:2671000, uso:'Res. 2 hojas', e:'🚪🚪'},
+    {id:'pivo-cond-s', n:'PIVO SK CONDOMINIUM — 1 hoja Standar',sku:'E07154004', tec:'JETFLEX', kg:300, vel:'6 seg',  v:'Bivolt', p:1662000, uso:'Unidad Pequeña',     e:'🚪'},
+    {id:'pivo-cond-m', n:'PIVO SK CONDOMINIUM — 1 hoja Super', sku:'E07124014', tec:'JETFLEX', kg:300, vel:'12 seg', v:'Bivolt', p:1800000, uso:'Unidad Pequeña',     e:'🚪'},
+    {id:'pivo-cond-g', n:'PIVO SK CONDOMINIUM — 1 hoja Mega',  sku:'E07194005', tec:'JETFLEX', kg:300, vel:'16 seg', v:'Bivolt', p:2048000, uso:'Unidad Pequeña',     e:'🚪'},
+    {id:'pivo-cond-ds',n:'PIVO SK CONDOMINIUM — Doble Standar',sku:'E07154003', tec:'JETFLEX', kg:300, vel:'6 seg',  v:'Bivolt', p:3062000, uso:'Unidad 2 hojas',     e:'🚪🚪'},
+    {id:'pivo-cond-dm',n:'PIVO SK CONDOMINIUM — Doble Super',  sku:'E07124011', tec:'JETFLEX', kg:300, vel:'12 seg', v:'Bivolt', p:3383000, uso:'Unidad 2 hojas',     e:'🚪🚪'},
+    {id:'pivo-cond-dg',n:'PIVO SK CONDOMINIUM — Doble Mega',   sku:'E07194003', tec:'JETFLEX', kg:300, vel:'16 seg', v:'Bivolt', p:3670000, uso:'Unidad 2 hojas',     e:'🚪🚪'},
+    {id:'pivo-lig-1',  n:'PIVO LIGER UNIVERSAL — 1 hoja 9m',  sku:'E07042001', tec:'MONO',    kg:500, vel:'5 seg',  v:'220V',   p:4316000, uso:'Industrial 1 hoja',  e:'🏭', badge:'CASO ESPECIAL'},
+    {id:'pivo-lig-2',  n:'PIVO LIGER UNIVERSAL — 1 hoja 6m',  sku:'E07231000', tec:'MONO',    kg:300, vel:'8 seg',  v:'127V',   p:2230000, uso:'Industrial 1 hoja',  e:'🏭', badge:'CASO ESPECIAL'},
+  ],
+  // ── SECCIONALES / GARAJE ──────────────────────────────────────
+  seccional:[
+    {id:'bh-w',      n:'BH-W STEEL con WiFi',         sku:'E04661000', tec:'MONO',              kg:100, vel:'20 seg', v:'127V',   p:1030000,  uso:'Residencial',          e:'🏠'},
+    {id:'bh-urus-1', n:'BH URUS 24V — 800N',          sku:'E04671003', tec:'24V',               vel:'16 seg', v:'127V',   p:940000,   uso:'Res./Unidad',          e:'🏠'},
+    {id:'bh-urus-2', n:'BH URUS 24V — 1000N',         sku:'E04671004', tec:'24V',               vel:'16 seg', v:'127V',   p:985000,   uso:'Res./Unidad',          e:'🏠'},
+    {id:'bh-urus-3', n:'BH URUS 24V — 1200N',         sku:'E04671005', tec:'24V',               vel:'8 seg',  v:'Bivolt', p:1062000,  uso:'Res./Unidad',          e:'🏠'},
+    {id:'bh-cd-jf',  n:'BH CADEMEX — Jetflex',        sku:'E04474004', tec:'JETFLEX',           kg:450, vel:'5.5 seg',v:'Bivolt',  p:1385000,  uso:'Garaje',               e:'🏠'},
+    {id:'bh-cd-m',   n:'BH CADEMEX — Mono',           sku:'E04441006', tec:'MONO',              kg:350, vel:'19 seg', v:'127V',   p:1000000,  uso:'Garaje',               e:'🏠'},
+    {id:'bh-pb',     n:'BH POWER BOLT — Jetflex',     sku:'E04544001+F53012016', tec:'JETFLEX', kg:350, vel:'8 seg',  v:'Bivolt', p:1430000,  uso:'Garaje/Unidad',        e:'🏠'},
+  ],
+  // ── BARRERAS ──────────────────────────────────────────────────
+  barrera:[
+    {id:'kd2',       n:'KD2 — Barrera hasta 3m',      sku:'E08163000', tec:'LEGERO',            vel:'4 seg',   v:'220V',   p:2308000,  uso:'Parqueadero P/M',      e:'🚧'},
+    {id:'k1',        n:'K1 — Barrera hasta 4m',        sku:'F08184001', tec:'JETFLEX',           vel:'1.5 seg', v:'Bivolt', p:3385000,  uso:'Parqueadero M',        e:'🚧'},
+    {id:'k1-4',      n:'K1 Plus — Brazo 4m',           sku:'F08184004', tec:'JETFLEX',           vel:'1.5 seg', v:'Bivolt', p:3692000,  uso:'Uso Intensivo',        e:'🚧'},
+    {id:'bar',       n:'BARRIER — Gran Parqueadero',   sku:'F08104073', tec:'JETFLEX BRUSHLESS', vel:'1.5 seg', v:'Bivolt', p:4538000,  uso:'Gran Parqueadero',     e:'🚧', badge:'ALTO TRÁFICO'},
+    {id:'k10',       n:'K10 — Jetflex 24V',            sku:'F08154005', tec:'JETFLEX 24V',       vel:'2-4 seg', v:'Bivolt', p:4724000,  uso:'Gran Parqueadero',     e:'🚧', badge:'ALTO TRÁFICO'},
+    {id:'bc1',       n:'BC1 — Contención por cadena',  sku:'E08144000', tec:'JETFLEX',           vel:'0.5 seg', v:'Bivolt', p:3154000,  uso:'Control especial',     e:'🚧'},
+    {id:'sempar',    n:'SEM PARAR — Tráfico muy intenso',sku:'F08032000',tec:'JETFLEX BRUSHLESS',vel:'1.5 seg', v:'Bivolt', p:10770000, uso:'Peajes/Plantas',       e:'⚡', badge:'MUY INTENSIVO'},
+  ],
+  // ── PUERTAS DE VIDRIO / AUTOMÁTICAS ──────────────────────────
+  vidrio:[
+    {id:'giro-jf',   n:'GIRO — Jetflex (batiente)',    sku:'F09194008', tec:'JETFLEX',           kg:120, vel:'2 seg',  v:'Bivolt', p:2616000,  uso:'Puertas vidrio batiente', e:'🪟'},
+    {id:'giro-24v',  n:'GIRO 24V — Batiente',          sku:'F09194019', tec:'JETFLEX 24V',       kg:120, vel:'2 seg',  v:'Bivolt', p:3076000,  uso:'Vidrio c/batería',        e:'🪟'},
+    {id:'spin',      n:'SPIN — Jetflex',                sku:'E09264000', tec:'JETFLEX',           kg:120, vel:'2 seg',  v:'Bivolt', p:2154000,  uso:'Puertas vidrio batiente', e:'🪟'},
+    {id:'rac',       n:'RAC 24V — Deslizante',          sku:'F09224000', tec:'24V',               kg:80,  vel:'50cm/s', v:'Bivolt', p:2577000,  uso:'Deslizante vidrio',       e:'🪟'},
+    {id:'tore-4',    n:'TORE — Jetflex Brushless 4m',  sku:'F09207067', tec:'JETFLEX BRUSHLESS', vel:'—', v:'Bivolt', p:5847000,  uso:'Grandes puertas vidrio',  e:'🪟'},
+    {id:'wind-4',    n:'WIND 24V — Jetflex Brushless 4m',sku:'F09274067',tec:'JETFLEX BRUSHLESS',vel:'50cm/s',v:'Bivolt',p:6631000,uso:'Grandes puertas vidrio',  e:'🪟'},
+  ],
+  // ── CORTINAS ENROLLABLES ──────────────────────────────────────
+  cortina:[
+    {id:'br1',       n:'BR1-500 — Motor cortina comercial',sku:'E05132002',tec:'MONO',          kg:500, vel:'6m/min', v:'220V',   p:1762000,  uso:'Comercial',            e:'🏪'},
+    {id:'roller',    n:'ROLLER — Cortina hasta 16m²',      sku:'E09331001',tec:'MONO',          kg:300, vel:'5.3m/m', v:'127V',   p:848000,   uso:'Comercial pequeño',    e:'🏪'},
+  ],
+};
+
+// Índice plano de todos los equipos para búsqueda
+function getCatalogoCompleto(){
+  return Object.values(EQUIPOS).flat();
+}
+
+// Busca equipo por SKU exacto o parcial
+function findEquipoBySku(sku){
+  const cat = getCatalogoCompleto();
+  return cat.find(e=>e.sku===sku)
+      || cat.find(e=>e.sku.replace(/\s/g,'')===sku.replace(/\s/g,''))
+      || cat.find(e=>sku.includes(e.sku.split('+')[0].trim()))
+      || cat.find(e=>e.sku.split('+')[0].trim()===sku.split('+')[0].trim());
+}
+
+
+// ══════════════════════════════════════
+// TRES CAMINOS DEL PASO 2
+// ══════════════════════════════════════
+let caminoActual = ''; // 'automatizar' | 'accesorios' | 'seguridad'
+
+function selCamino(camino){
+  caminoActual = camino;
+  document.getElementById('guia-camino-sel').style.display = 'none';
+  document.getElementById('guia-motor').style.display    = 'none';
+  document.getElementById('guia-catalogo').style.display = 'none';
+
+  if(camino === 'automatizar'){
+    document.getElementById('guia-motor').style.display = 'block';
+    guiaRespuestas = {}; guiaPasoActual = 0;
+    document.getElementById('motor-resultado').style.display = 'none';
+    document.getElementById('guia-nav').style.display = 'flex';
+    guiaRender();
+  } else {
+    document.getElementById('guia-catalogo').style.display = 'block';
+    renderCatalogoDirecto(camino);
+  }
+}
+
+function volverCamino(){
+  document.getElementById('guia-camino-sel').style.display = 'block';
+  document.getElementById('guia-motor').style.display    = 'none';
+  document.getElementById('guia-catalogo').style.display = 'none';
+}
+
+// Catálogo directo para accesorios y seguridad
+const GRUPOS_ACCESORIOS = [
+  {id:'sen',     label:'🚦 Señalización',             cat:'accesorios'},
+  {id:'foto',    label:'📡 Fotoceldas',               cat:'accesorios'},
+  {id:'prot',    label:'⚡ Protección eléctrica',     cat:'accesorios'},
+  {id:'central', label:'🖥 Centrales electrónicas',  cat:'accesorios'},
+  {id:'crem',    label:'⚙ Cremalleras',              cat:'accesorios'},
+  {id:'ctrl',    label:'📻 Controles / Transmisores', cat:'accesorios'},
+  {id:'con',     label:'📱 Conectividad inteligente', cat:'accesorios'},
+  {id:'elec',    label:'🔒 Electrocerraduras',        cat:'accesorios'},
+  {id:'boton',   label:'🔘 Botoneras y pulsadores',  cat:'accesorios'},
+  {id:'asta',    label:'🚧 Astas para barrera',       cat:'accesorios'},
+  {id:'acceso',  label:'🪪 Control de acceso RFID',  cat:'seguridad'},
+  {id:'alarma',  label:'🚨 Alarmas y domótica',       cat:'seguridad'},
+  {id:'camwifi', label:'📷 Cámaras WiFi PPA ON',      cat:'seguridad'},
+  {id:'camip',   label:'🎥 Cámaras IP y análogas',   cat:'seguridad'},
+  {id:'grabador',label:'💾 Grabadores y accesorios CCTV', cat:'seguridad'},
+];
+
+function renderCatalogoDirecto(camino){
+  // Limpiar selección previa para este camino
+  accSel = new Set();
+  accQty = {};
+
+  const titulo = camino==='accesorios'
+    ? 'Accesorios y repuestos' : 'Seguridad y cámaras';
+  const sub = camino==='accesorios'
+    ? 'Seleccione los productos que necesita. Puede agregar cantidades.'
+    : 'Seleccione equipos de seguridad, cámaras o control de acceso.';
+  document.getElementById('catalogo-titulo').textContent = titulo;
+  document.getElementById('catalogo-sub').textContent    = sub;
+
+  const grupos = GRUPOS_ACCESORIOS.filter(g=>g.cat===camino);
+  const cont   = document.getElementById('catalogo-grupos');
+  cont.innerHTML = grupos.map(g=>{
+    const items = ACCS[g.id]||[];
+    if(!items.length) return '';
+    return `<div class="acc-acordeon open" id="acg-${g.id}">
+      <div class="acc-acordeon-header" onclick="toggleAcordeon('${g.id}')">
+        <span class="acc-acordeon-titulo">${g.label}</span>
+        <div class="acc-acordeon-meta">
+          <span class="acc-badge-count acc-badge-0" id="cnt-${g.id}">0 sel.</span>
+          <span class="acc-chevron">▼</span>
+        </div>
+      </div>
+      <div class="acc-acordeon-body">
+        ${items.map(a=>renderAccItem(a,g.id)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function irAcAbiertoDesde(origen){
+  // Si viene del catálogo directo, no hay equipoSel — creamos uno ficticio
+  if(!equipoSel){
+    equipoSel = {
+      id:'custom', n:'Selección personalizada de productos',
+      sku:'CUSTOM', tec:'Varios', p:0, uso:'—', e:'🔧',
+      v:'—', vel:'—', kg:null
+    };
+  }
+  renderAccesoriosInteligentes();
+  goStep(3);
+}
+
+
+let guiaRespuestas = {};
+let guiaPasoActual = 0;
+
+const GUIA_PASOS = [
+  {
+    id:'tipo', pregunta:'¿Qué vas a automatizar?',
+    sub:'Selecciona el tipo de acceso o sistema.',
+    tipo:'opciones', cols:2,
+    opciones:[
+      {val:'corredera', icon:'🚗', lbl:'Puerta corredera',  sub:'Se desliza a un lado'},
+      {val:'batiente',  icon:'🚪', lbl:'Puerta batiente',   sub:'Abre hacia adentro/afuera'},
+      {val:'seccional', icon:'🏠', lbl:'Garaje seccional',  sub:'Sube verticalmente'},
+      {val:'barrera',   icon:'🚧', lbl:'Barrera vehicular', sub:'Control de parqueadero'},
+      {val:'vidrio',    icon:'🪟', lbl:'Puerta de vidrio',  sub:'Automática deslizante'},
+      {val:'cortina',   icon:'🏪', lbl:'Cortina enrollable',sub:'Local comercial'},
+    ]
+  },
+  {
+    id:'hojas', pregunta:'¿Cuántas hojas tiene el portón?',
+    sub:'Una hoja abre a un lado. Dos hojas abren al centro.',
+    tipo:'opciones', cols:2,
+    soloSi: r => r.tipo==='batiente',
+    opciones:[
+      {val:'1', icon:'🚪',    lbl:'Una hoja',  sub:'Abre a un lado'},
+      {val:'2', icon:'🚪🚪', lbl:'Dos hojas', sub:'Abre al centro'},
+    ]
+  },
+  {
+    id:'largo', pregunta:'¿Cuántos metros mide?',
+    sub: r => r.tipo==='batiente'
+      ? 'Largo de CADA HOJA individualmente — no el total del portón.'
+      : r.tipo==='barrera'
+      ? 'Largo del brazo que necesita cubrir el acceso.'
+      : 'Largo total de la puerta.',
+    tipo:'numero', unidad:'metros', placeholder:'Ej: 4',
+  },
+  {
+    id:'material', pregunta:'¿De qué material es el portón?',
+    sub:'El material nos permite estimar el peso para recomendar el motor correcto.',
+    tipo:'opciones', cols:2,
+    soloSi: r => r.tipo==='corredera',
+    opciones:[
+      {val:'reja_liviana', icon:'🔲', lbl:'Reja liviana',    sub:'Tubería delgada · hasta 400 kg'},
+      {val:'lamina',       icon:'⬛', lbl:'Lámina metálica', sub:'Lámina + marco · 400-700 kg'},
+      {val:'reja_pesada',  icon:'🔳', lbl:'Reja pesada',     sub:'Tubería gruesa · 700-1000 kg'},
+      {val:'madera',       icon:'🪵', lbl:'Madera o mixta',  sub:'Madera + metal · hasta 500 kg'},
+      {val:'pesado',       icon:'🏗', lbl:'Muy pesado',      sub:'Concreto u otro · +1000 kg'},
+    ]
+  },
+  {
+    id:'trafico', pregunta:'¿Cuántos vehículos o personas pasan por día?',
+    sub:'Define la exigencia del motor y los ciclos requeridos.',
+    tipo:'opciones', cols:2,
+    opciones:[
+      {val:'bajo',       icon:'🐢', lbl:'Pocos',       sub:'Familia · menos de 20/día'},
+      {val:'moderado',   icon:'🚶', lbl:'Moderado',    sub:'20 a 100 por día'},
+      {val:'intenso',    icon:'🚗', lbl:'Intenso',     sub:'100 a 300 por día'},
+      {val:'muy_intenso',icon:'🏎', lbl:'Muy intenso', sub:'Más de 300 por día'},
+    ]
+  },
+  {
+    id:'energia', pregunta:'¿Cómo es la energía eléctrica en el lugar?',
+    sub:'Caquetá tiene fluctuaciones frecuentes — esto define si necesita protección adicional.',
+    tipo:'opciones', cols:2,
+    opciones:[
+      {val:'estable',   icon:'⚡', lbl:'Estable',       sub:'Sin cortes frecuentes'},
+      {val:'inestable', icon:'⚠', lbl:'Inestable',     sub:'Cortes o fluctuaciones'},
+      {val:'sin_red',   icon:'🔋', lbl:'Sin red estable',sub:'Zona rural o remota'},
+    ]
+  },
+];
+
+function guiaPasosActivos(){
+  return GUIA_PASOS.filter(p => !p.soloSi || p.soloSi(guiaRespuestas));
+}
+
+function guiaInit(){
+  caminoActual = '';
+  document.getElementById('guia-camino-sel').style.display = 'block';
+  document.getElementById('guia-motor').style.display    = 'none';
+  document.getElementById('guia-catalogo').style.display = 'none';
+}
+
+function guiaRender(){
+  const pasos = guiaPasosActivos();
+  // Progreso
+  document.getElementById('guia-progress').innerHTML =
+    pasos.map((_,i)=>`<div class="guia-dot ${i<guiaPasoActual?'done':i===guiaPasoActual?'active':''}"></div>`).join('');
+
+  if(guiaPasoActual >= pasos.length){ mostrarResultadoMotor(); return; }
+
+  const paso = pasos[guiaPasoActual];
+  const subTxt = typeof paso.sub==='function' ? paso.sub(guiaRespuestas) : paso.sub;
+  const val = guiaRespuestas[paso.id];
+  let html = `<div class="guia-pregunta">${paso.pregunta}</div><div class="guia-sub">${subTxt}</div>`;
+
+  if(paso.tipo==='opciones'){
+    html += `<div class="guia-opciones ${paso.cols===2?'col2':''}">`;
+    paso.opciones.forEach(o=>{
+      html += `<div class="guia-opt ${val===o.val?'sel':''}" onclick="guiaSel('${paso.id}','${o.val}')">
+        <div class="guia-opt-icon">${o.icon}</div>
+        <div><div class="guia-opt-lbl">${o.lbl}</div><div class="guia-opt-sub">${o.sub}</div></div>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += `<input class="guia-input" type="number" min="0.5" max="50" step="0.5"
+      placeholder="${paso.placeholder}" value="${val||''}" id="guia-num"
+      oninput="guiaRespuestas['${paso.id}']=parseFloat(this.value)||0">
+    <div class="guia-input-unit">${paso.unidad}</div>`;
+  }
+  document.getElementById('guia-pantalla').innerHTML = html;
+  document.getElementById('motor-resultado').style.display='none';
+  document.getElementById('guia-nav').style.display='flex';
+  document.querySelector('.content').scrollTop = 0;
+}
+
+function guiaSel(id, val){
+  guiaRespuestas[id]=val;
+  setTimeout(()=>guiaSiguiente(), 220);
+}
+
+function guiaSiguiente(){
+  const pasos = guiaPasosActivos();
+  const paso  = pasos[guiaPasoActual];
+  if(paso && !guiaRespuestas[paso.id]){ showToast('⚠ Selecciona una opción'); return; }
+  guiaPasoActual++;
+  if(guiaPasoActual >= guiaPasosActivos().length) mostrarResultadoMotor();
+  else guiaRender();
+}
+
+function guiaAnterior(){
+  if(guiaPasoActual>0){ guiaPasoActual--; guiaRender(); }
+  else goStep(1);
+}
+
+// ── MOTOR DE REGLAS ──────────────────────────────────────────────
+function motorReglas(r){
+  const tipo    = r.tipo      ||'';
+  const hojas   = r.hojas     ||'1';
+  const largo   = parseFloat(r.largo)||0;
+  const mat     = r.material  ||'';
+  const trafico = r.trafico   ||'bajo';
+  const energia = r.energia   ||'estable';
+  let recs = [];
+
+  if(tipo==='corredera'){
+    const industrial = mat==='pesado'||mat==='reja_pesada'||trafico==='muy_intenso'||trafico==='intenso';
+    if(industrial){
+      recs=[
+        {sku:'E06184003',rank:'⭐ Recomendado', razon:`<strong>Línea industrial</strong> — Diego recomienda siempre sobredimensionar. El torque extra compensa errores de instalación y garantiza durabilidad.`},
+        {sku:'E06264001',rank:'2ª opción',      razon:`Mayor capacidad de ciclos. Para tráfico muy intenso o portones de más de 1500 kg.`},
+        {sku:'E06614002',rank:'Alta exigencia', razon:`<strong>Jetflex Brushless</strong> — menor mantenimiento del mercado. Uso 24/7 sin interrupciones.`},
+      ];
+    } else if(mat==='lamina'||mat==='madera'){
+      recs=[
+        {sku:'E02514006',rank:'⭐ Recomendado', razon:`Portón de lámina o madera. DZ RIO Jetflex — velocidad y durabilidad superior al uso residencial estándar.`},
+        {sku:'E02481005',rank:'2ª opción',      razon:`Alternativa para uso bajo con menor presupuesto.`},
+        {sku:'E06281000',rank:'Con margen',     razon:`Industrial como garantía de instalación. Recomendado si hay duda sobre el peso real.`},
+      ];
+    } else {
+      recs=[
+        {sku:'E02253400',rank:'⭐ Recomendado', razon:`Reja liviana en uso familiar. DZ STARK Jetflex — velocidad y precisión para uso residencial.`},
+        {sku:'E02514006',rank:'2ª opción',      razon:`Mayor durabilidad aunque la puerta sea liviana.`},
+        {sku:'E06281000',rank:'Seguridad extra', razon:`Industrial como garantía. Diego recomienda sobredimensionar casi siempre.`},
+      ];
+    }
+    if(largo>4) recs._cremallera=true;
+  }
+
+  if(tipo==='batiente'){
+    const d = hojas==='2';
+    if(largo<=2){
+      recs = d
+        ?[{sku:'E03481000',rank:'⭐ Recomendado',razon:`Doble hoja hasta 2m c/u. PIVO SK Mono Standar — confiable y económico.`},
+          {sku:'E03414005 + A17818',rank:'2ª opción',razon:`PIVO HOME Jetflex — apertura más rápida.`},
+          {sku:'E07154003',rank:'Alta exigencia',razon:`PIVO SK CONDOMINIUM para conjuntos de alto tráfico.`}]
+        :[{sku:'E03481004',rank:'⭐ Recomendado',razon:`Una hoja hasta 2m. PIVO SK Mono — solución residencial confiable.`},
+          {sku:'E03414004 + A17818',rank:'2ª opción',razon:`PIVO HOME Jetflex — más velocidad.`},
+          {sku:'E07154004',rank:'Alta exigencia',razon:`PIVO SK CONDOMINIUM 1 hoja — uso intensivo.`}];
+    } else if(largo<=3.5){
+      recs = d
+        ?[{sku:'E03481001',rank:'⭐ Recomendado',razon:`Doble hoja hasta 3.5m. PIVO SK Super.`},
+          {sku:'E03414005 + A17819',rank:'2ª opción',razon:`PIVO HOME Jetflex Super.`},
+          {sku:'E07124011',rank:'Alta exigencia',razon:`PIVO SK CONDOMINIUM Super.`}]
+        :[{sku:'E03481005',rank:'⭐ Recomendado',razon:`Una hoja hasta 3.5m. PIVO SK Super.`},
+          {sku:'E03414004 + A17819',rank:'2ª opción',razon:`PIVO HOME Jetflex Super.`},
+          {sku:'E07124014',rank:'Alta exigencia',razon:`PIVO SK CONDOMINIUM Super 1 hoja.`}];
+    } else if(largo<=4.5){
+      recs = d
+        ?[{sku:'E07154003',rank:'⭐ Recomendado',razon:`Doble hoja hasta 4.5m. PIVO SK CONDOMINIUM Mega.`},
+          {sku:'E07194003',rank:'2ª opción',razon:`PIVO CONDOMINIUM Jetflex — mayor velocidad.`},
+          {sku:'E07124011',rank:'3ª opción',razon:`PIVO SK CONDOMINIUM Super si el presupuesto ajusta.`}]
+        :[{sku:'E07194005',rank:'⭐ Recomendado',razon:`Una hoja hasta 4.5m. PIVO SK CONDOMINIUM Mega.`},
+          {sku:'E07194001+A16510',rank:'2ª opción',razon:`PIVO CONDOMINIUM Jetflex 1 hoja.`},
+          {sku:'E07154004',rank:'Económico',razon:`PIVO SK CONDOMINIUM Standar.`}];
+    } else {
+      recs=[
+        {sku:'E07042001',rank:'⭐ Caso especial',razon:`Portón mayor a 4.5m por hoja. <strong>PIVO LIGER UNIVERSAL</strong>. ${d?'Se requieren DOS motores (uno por hoja).':'Motor único.'}` },
+        {sku:'E07231000',rank:'2ª opción',razon:`PIVO LIGER 6m — si la hoja es hasta 6m de alto.`},
+      ];
+      if(d) recs._notaEspecial = '⚠ Doble hoja > 4.5m requiere DOS motores PIVO LIGER.';
+    }
+  }
+
+  if(tipo==='barrera'){
+    if(trafico==='muy_intenso'){
+      recs=[
+        {sku:'F08032000',rank:'⭐ Alta exigencia',razon:`<strong>SEM PARAR</strong> — 1200 ciclos/día, apertura < 1.5 seg. Para peajes, plantas o accesos de flujo máximo.`},
+        {sku:'F08104073',rank:'2ª opción',razon:`BARRIER Jetflex Brushless — hasta 600 ciclos. Menor mantenimiento del mercado.`},
+        {sku:'F08154005',rank:'3ª opción',razon:`K10 Jetflex 24V — funcionamiento con bielas para accesos intensos.`},
+      ];
+    } else if(trafico==='intenso'){
+      recs=[
+        {sku:'F08184004',rank:'⭐ Recomendado',razon:`K1 Plus Brazo 4m — Jetflex rápido y confiable para parqueaderos de uso intensivo.`},
+        {sku:'F08104073',rank:'2ª opción',razon:`BARRIER Jetflex Brushless para mayor durabilidad.`},
+        {sku:'F08184001',rank:'Económico',razon:`K1 estándar si el brazo de 3-4m es suficiente.`},
+      ];
+    } else {
+      recs=[
+        {sku:'E08163000',rank:'⭐ Recomendado',razon:`KD2 Legero — solución confiable para conjuntos y negocios con tráfico normal.`},
+        {sku:'F08184001',rank:'2ª opción',razon:`K1 Jetflex si necesita más velocidad o el brazo supera 3 metros.`},
+        {sku:'F08184004',rank:'3ª opción',razon:`K1 Plus 4m para mayor cobertura de acceso.`},
+      ];
+    }
+    recs._astaObligatoria = true;
+  }
+
+  if(tipo==='seccional'){
+    recs=[
+      {sku:'E04474004',rank:'⭐ Recomendado',razon:`BH CADEMEX Jetflex — garaje seccional residencial. Sube verticalmente, ideal para techo bajo.`},
+      {sku:'E04671004',rank:'2ª opción',razon:`BH URUS 24V — mayor autonomía con baterías para zonas con cortes.`},
+      {sku:'E04441006',rank:'Económico',razon:`BH CADEMEX Mono — opción de menor presupuesto para uso bajo.`},
+    ];
+  }
+
+  if(tipo==='vidrio'){
+    recs = largo>4
+      ?[{sku:'F09274067',rank:'⭐ Recomendado',razon:`WIND 24V — puerta de vidrio grande, hasta 300 kg por hoja, 50 cm/s, uso intensivo.`},
+        {sku:'E09234018',rank:'2ª opción',razon:`WIND 24V 5m para pasos más amplios.`},
+        {sku:'F09207067',rank:'Económico',razon:`TORE Jetflex Brushless 4m.`}]
+      :[{sku:'F09194008',rank:'⭐ Recomendado',razon:`GIRO Jetflex — puerta batiente de vidrio automática, uso intensivo, hasta 120 kg.`},
+        {sku:'E09264000',rank:'2ª opción',razon:`SPIN Jetflex — para puertas batientes de vidrio más angostas.`},
+        {sku:'F09224000',rank:'Deslizante',razon:`RAC 24V — puerta deslizante de vidrio con autonomía en cortes.`}];
+  }
+
+  if(tipo==='cortina'){
+    recs=[
+      {sku:'E05132002',rank:'⭐ Recomendado',razon:`BR1-500 Mono — hasta 25m², incluye testera derecha e izquierda.`},
+      {sku:'E09331001',rank:'2ª opción',razon:`ROLLER Mono — para cortinas más pequeñas hasta 16m².`},
+    ];
+  }
+
+  if(energia==='inestable'||energia==='sin_red') recs._nobreak=true;
+  return recs;
+}
+
+function mostrarResultadoMotor(){
+  document.getElementById('guia-pantalla').innerHTML='';
+  document.getElementById('guia-nav').style.display='none';
+  document.getElementById('motor-resultado').style.display='block';
+
+  const recs = motorReglas(guiaRespuestas);
+  let html = '';
+
+  if(recs._notaEspecial){
+    html += `<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:var(--dorado)">${recs._notaEspecial}</div>`;
+  }
+
+  let encontrados = 0;
+  recs.filter(r=>r&&r.sku).forEach((rec,idx)=>{
+    const eq = findEquipoBySku(rec.sku);
+    if(!eq) return;
+    encontrados++;
+    const rankClass = idx===0?'rank-1':idx===1?'rank-2':'rank-3';
+    const selId = `mc-${eq.id}`;
+    html += `<div class="motor-card ${equipoSel?.id===eq.id?'sel':''}" id="${selId}" onclick="selEquipoMotor('${eq.id}')">
+      <span class="motor-rank ${rankClass}">${rec.rank}</span>
+      <div class="motor-nombre">${eq.e} ${eq.n}</div>
+      <div class="motor-razon">${rec.razon}</div>
+      <div class="eq-tags">
+        <span class="tag tag-n">${eq.tec}</span>
+        ${eq.kg?`<span class="tag tag-a">${eq.kg}kg</span>`:''}
+        ${eq.vel?`<span class="tag tag-a">⚡${eq.vel}</span>`:''}
+        ${eq.v?`<span class="tag tag-v">${eq.v}</span>`:''}
+      </div>
+      <div class="motor-precio">${fmtCOP(precioMostrar(eq.p))}</div>
+    </div>`;
+  });
+
+  if(!encontrados){
+    html += `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:12px;font-size:11px;color:var(--dorado)">
+      ⚠ No se encontró una coincidencia exacta. Use la búsqueda por nombre abajo o consulte al asesor técnico.
+    </div>`;
+  }
+
+  if(recs._nobreak){
+    html += `<div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:10px;margin-bottom:8px;font-size:11px;color:#60A5FA">⚡ <strong>Recomendamos NoBreak</strong> — energía inestable detectada.</div>`;
+  }
+  if(recs._cremallera){
+    html += `<div style="background:rgba(232,92,0,.08);border:1px solid rgba(232,92,0,.2);border-radius:8px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--naranja3)">📏 <strong>Portón mayor a 4m</strong> — se agrega cremallera extra en Accesorios.</div>`;
+  }
+  if(recs._astaObligatoria){
+    html += `<div style="background:rgba(232,92,0,.1);border:1px solid var(--naranja);border-radius:8px;padding:10px;margin-bottom:8px;font-size:11px;color:var(--naranja2)">🚧 <strong>Asta obligatoria</strong> — seleccione el largo del asta en Accesorios.</div>`;
+  }
+
+  document.getElementById('motor-cards').innerHTML = html;
+  document.querySelector('.content').scrollTop = 0;
+}
+
+function selEquipoMotor(id){
+  const eq = getCatalogoCompleto().find(e=>e.id===id);
+  if(!eq){ showToast('⚠ Use la búsqueda manual'); return; }
+  equipoSel = eq;
+  document.querySelectorAll('.motor-card').forEach(c=>c.classList.remove('sel'));
+  const card = document.getElementById(`mc-${id}`);
+  if(card) card.classList.add('sel');
+  showToast(`✅ ${eq.n} seleccionado`);
+  setTimeout(()=>{ renderAccesoriosInteligentes(); goStep(3); }, 450);
+}
+
+function buscarProducto(q){
+  const res = document.getElementById('busqueda-resultados');
+  if(!q||q.length<2){ res.innerHTML=''; return; }
+  const ql  = q.toLowerCase();
+  const cat = getCatalogoCompleto();
+  const enc = cat.filter(p=>
+    p.n.toLowerCase().includes(ql) ||
+    (p.tec && p.tec.toLowerCase().includes(ql)) ||
+    (p.uso && p.uso.toLowerCase().includes(ql))
+  ).slice(0,5);
+  if(!enc.length){ res.innerHTML='<div style="font-size:11px;color:var(--gtxt);padding:8px">Sin resultados — intente con otro nombre.</div>'; return; }
+  res.innerHTML = enc.map(p=>`<div class="busqueda-item" onclick="selBusqueda('${p.id}')">
+    <div><div class="busqueda-nombre">${p.e} ${p.n}</div><div class="busqueda-sku">${p.tec} · ${p.uso}</div></div>
+    <div class="busqueda-precio">${fmtCOP(precioMostrar(p.p))}</div>
+  </div>`).join('');
+}
+
+function selBusqueda(id){
+  const eq = getCatalogoCompleto().find(e=>e.id===id);
+  if(!eq) return;
+  equipoSel = eq;
+  document.getElementById('busqueda-input').value='';
+  document.getElementById('busqueda-resultados').innerHTML='';
+  showToast(`✅ ${eq.n} seleccionado`);
+  setTimeout(()=>{ renderAccesoriosInteligentes(); goStep(3); }, 400);
+}
+
+// ── ID CON TIMESTAMP ─────────────────────────────────────────────
+function generarID(){
+  const n=new Date(), pad=x=>String(x).padStart(2,'0');
+  return `COT-${n.getFullYear()}${pad(n.getMonth()+1)}${pad(n.getDate())}-${pad(n.getHours())}${pad(n.getMinutes())}${pad(n.getSeconds())}`;
+}
+
+// ══════════════════════════════════════
+// ACCESORIOS INTELIGENTES EN ACORDEÓN
+// ══════════════════════════════════════
+// Reglas de recomendación por tipo de equipo
+function accRecomendadosPara(tipoEquipo, skuEquipo){
+  const r = guiaRespuestas;
+  const esBarrera = tipoEquipo==='barrera'||r.tipo==='barrera';
+  const energiaInestable = r.energia==='inestable'||r.energia==='sin_red';
+
+  return {
+    // IDs de accesorios recomendados automáticamente
+    recomendados: [
+      'slux',   // Semáforo siempre
+      'rele',   // Módulo relé siempre
+      'f32c',   // Fotocelda siempre
+      ...(energiaInestable ? ['pred'] : []),
+    ],
+    // IDs obligatorios (no se pueden desmarcar en barreras)
+    obligatorios: esBarrera ? ['asta-std'] : [],
+  };
+}
+
+// ── RENDER ACC ITEM (reutilizable) ──────────────────────────────
+function renderAccItem(a, grupoId){
+  const isOn = accSel.has(a.id);
+  const isSug = !isOn && accSel._sugeridos && accSel._sugeridos.includes(a.id);
+  const pM   = precioMostrar(a.p);
+  const qty  = accQty[a.id]||1;
+  const sugBadge = isSug ? `<span style="font-size:8px;font-weight:700;color:var(--naranja);margin-left:6px;border:1px solid rgba(232,92,0,.4);border-radius:10px;padding:1px 6px">SUGERIDO</span>` : '';
+  if(a.qty){
+    return `<div class="acc-item ${isOn?'on':''} ${isSug?'sug':''}" id="ai-${a.id}" onclick="toggleAccItem('${a.id}',${a.p},'${grupoId}')">
+      <div class="acc-check">${isOn?'✅':'⬜'}</div>
+      <div style="flex:1">
+        <div class="acc-nom">${a.n}${sugBadge}</div>
+        <div class="acc-pre">${fmtCOP(pM)}</div>
+        <div class="acc-qty-row" id="aqr-${a.id}" style="display:${isOn?'flex':'none'}">
+          <button class="acc-qty-btn" onclick="chgQty(event,'${a.id}',${a.p},-1,'${grupoId}')">−</button>
+          <span class="acc-qty-num" id="aqn-${a.id}">${qty}</span>
+          <button class="acc-qty-btn" onclick="chgQty(event,'${a.id}',${a.p},1,'${grupoId}')">+</button>
+          <span class="acc-qty-subt" id="aqs-${a.id}">${isOn?fmtCOP(pM*qty):''}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `<div class="acc-item ${isOn?'on':''} ${isSug?'sug':''}" id="ai-${a.id}" onclick="toggleAccItem('${a.id}',${a.p},'${grupoId}')">
+    <div class="acc-check">${isOn?'✅':'⬜'}</div>
+    <div style="flex:1">
+      <div class="acc-nom">${a.n}${sugBadge}</div>
+      <div class="acc-pre">${fmtCOP(pM)}</div>
+    </div>
+  </div>`;
+}
+
+function renderAccesoriosInteligentes(){
+  const tipo = guiaRespuestas.tipo || '';
+  const esBarrera = tipo==='barrera';
+  const energiaInestable = guiaRespuestas.energia==='inestable'||guiaRespuestas.energia==='sin_red';
+
+  // Solo preseleccionar recomendados si viene del camino automatizar
+  // Si viene de accesorios/seguridad, conservar lo que el usuario ya seleccionó
+  if(caminoActual === 'automatizar' || caminoActual === ''){
+    // Sin preselección — solo sugerencias visuales marcadas con borde
+    accSel = new Set();
+    accQty = {};
+    // Marcar sugeridos según contexto para que el asesor los vea destacados
+    if(energiaInestable) accSel._sugeridos = ['slux','rele','f32c','pred'];
+    else accSel._sugeridos = ['slux','rele','f32c'];
+    if(esBarrera){ accSel._sugeridos.push('asta-3n','asta-goma'); }
+  }
+
+  const hint = document.getElementById('acc-seg-hint');
+  if(hint) hint.textContent = esBarrera
+    ? '🚧 Barrera — el asta es obligatoria. Seleccione el largo adecuado.'
+    : energiaInestable
+    ? '⚡ Energía inestable — se recomienda protección eléctrica.'
+    : caminoActual==='seguridad'
+    ? '📷 Seleccione los equipos de seguridad para esta propuesta.'
+    : caminoActual==='accesorios'
+    ? '🔧 Seleccione los accesorios y repuestos para esta propuesta.'
+    : 'Revise los accesorios recomendados y agregue lo que necesite.';
+
+  const todosGrupos = [
+    {id:'sen',     label:'🚦 Señalización',              obligatorio:false, abierto:true},
+    {id:'foto',    label:'📡 Fotoceldas',                obligatorio:false, abierto:true},
+    {id:'asta',    label:'🚧 Astas para barrera',        obligatorio:esBarrera, abierto:esBarrera},
+    {id:'prot',    label:'⚡ Protección eléctrica',      obligatorio:false, abierto:energiaInestable},
+    {id:'con',     label:'📱 Conectividad inteligente',  obligatorio:false, abierto:false},
+    {id:'ctrl',    label:'📻 Controles / Transmisores',  obligatorio:false, abierto:false},
+    {id:'crem',    label:'⚙ Cremalleras',               obligatorio:false, abierto:false},
+    {id:'central', label:'🖥 Centrales electrónicas',   obligatorio:false, abierto:false},
+    {id:'elec',    label:'🔒 Electrocerraduras',         obligatorio:false, abierto:false},
+    {id:'boton',   label:'🔘 Botoneras y pulsadores',   obligatorio:false, abierto:false},
+    {id:'acceso',  label:'🪪 Control de acceso RFID',   obligatorio:false, abierto:caminoActual==='seguridad'},
+    {id:'alarma',  label:'🚨 Alarmas y domótica',        obligatorio:false, abierto:caminoActual==='seguridad'},
+    {id:'camwifi', label:'📷 Cámaras WiFi PPA ON',       obligatorio:false, abierto:caminoActual==='seguridad'},
+    {id:'camip',   label:'🎥 Cámaras IP y análogas',    obligatorio:false, abierto:caminoActual==='seguridad'},
+    {id:'grabador',label:'💾 Grabadores y CCTV',         obligatorio:false, abierto:caminoActual==='seguridad'},
+  ];
+
+  const cont = document.getElementById('acc-acordeones');
+  cont.innerHTML = todosGrupos.map(g=>{
+    const items = ACCS[g.id]||[];
+    if(!items.length) return '';
+    const selCount = items.filter(a=>accSel.has(a.id)).length;
+    const badgeClass = selCount>0?(g.obligatorio?'acc-badge-oblig':'acc-badge-count'):'acc-badge-count acc-badge-0';
+    return `<div class="acc-acordeon ${g.obligatorio?'obligatorio':''} ${g.abierto||selCount>0?'open':''}" id="acg-${g.id}">
+      <div class="acc-acordeon-header" onclick="toggleAcordeon('${g.id}')">
+        <span class="acc-acordeon-titulo">${g.label}${g.obligatorio?' — OBLIGATORIO':''}</span>
+        <div class="acc-acordeon-meta">
+          <span class="${badgeClass}" id="cnt-${g.id}">${selCount} sel.</span>
+          <span class="acc-chevron">▼</span>
+        </div>
+      </div>
+      <div class="acc-acordeon-body">
+        ${items.map(a=>renderAccItem(a,g.id)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAcordeon(id){
+  const el = document.getElementById('acg-'+id);
+  if(el) el.classList.toggle('open');
+}
+
+function toggleAccItem(id, p, grupoId){
+  if(accSel.has(id)) accSel.delete(id);
+  else accSel.add(id);
+  const div = document.getElementById('ai-'+id);
+  const isOn = accSel.has(id);
+  if(div){
+    div.classList.toggle('on', isOn);
+    div.querySelector('.acc-check').textContent = isOn?'✅':'⬜';
+    const qr = document.getElementById('aqr-'+id);
+    if(qr){
+      qr.style.display = isOn?'flex':'none';
+      if(isOn && !accQty[id]) accQty[id]=1;
+      const qs = document.getElementById('aqs-'+id);
+      if(qs) qs.textContent = isOn?fmtCOP(precioMostrar(p)*(accQty[id]||1)):'';
+    }
+  }
+  actualizarContadorAcordeon(grupoId);
+}
+
+function actualizarContadorAcordeon(grupoId){
+  const grp = ACCS[grupoId];
+  if(!grp) return;
+  const cnt = grp.filter(a=>accSel.has(a.id)).length;
+  const el  = document.getElementById('cnt-'+grupoId);
+  if(el) el.textContent = `${cnt} sel.`;
+}
+
+
+const TIPOS_POR_SEG = {
+  L01:[
+    {id:'sl',  icon:'🚗',lbl:'Corredera', sub:'Deslizante',
+     specs:{peso:'Hasta 600 kg',velocidad:'2–16 seg',ciclos:'50–100/día',uso:'Residencial · 1 vehículo'},
+     rec:'Opción más popular en casas. Si la entrada tiene espacio lateral, es la primera recomendación.',
+     nota:'Caquetá: fluctuaciones frecuentes → JETFLEX 24V + NoBreak recomendados.'},
+    {id:'sb',  icon:'🚪',lbl:'Batiente',  sub:'1 ó 2 hojas',
+     specs:{peso:'Hasta 200 kg/hoja',velocidad:'5–16 seg',ciclos:'30–80/día',uso:'Residencial · Portón clásico'},
+     rec:'Ideal cuando no hay espacio lateral. Para dos hojas usa el modelo DUO.',
+     nota:'Mide el ángulo de apertura disponible antes de cotizar.'},
+    {id:'bhc', icon:'🏠',lbl:'Seccional', sub:'Garaje arriba',
+     specs:{peso:'Hasta 450 kg',velocidad:'5.5–19 seg',ciclos:'20–50/día',uso:'Garaje residencial'},
+     rec:'Para garajes con techo bajo. Sube verticalmente sin ocupar espacio exterior.',
+     nota:'Requiere mínimo 30 cm de espacio sobre el dintel.'},
+  ],
+  L02:[
+    {id:'sl',     icon:'🚗',lbl:'Corredera',  sub:'Deslizante',
+     specs:{peso:'Hasta 600 kg',velocidad:'2–16 seg',ciclos:'100–300/día',uso:'Acceso semintensivo'},
+     rec:'Primera opción para accesos vehiculares de conjuntos pequeños y medianos.',
+     nota:'Tráfico > 200 ciclos/día → elegir JETFLEX o JETFLEX BRUSHLESS.'},
+    {id:'sb',     icon:'🚪',lbl:'Batiente',   sub:'1 ó 2 hojas',
+     specs:{peso:'Hasta 200 kg/hoja',velocidad:'5–16 seg',ciclos:'50–150/día',uso:'Acceso peatonal / secundario'},
+     rec:'Para accesos peatonales o secundarios. Complementa la talanquera vehicular.',
+     nota:'Recomendado con fotocelda de seguridad incluida.'},
+    {id:'barrera',icon:'🚧',lbl:'Talanquera', sub:'Control vehicular',
+     specs:{peso:'N/A · Brazo hasta 6m',velocidad:'1.5–4 seg',ciclos:'200–500/día',uso:'Parqueadero conjunto'},
+     rec:'Estándar en conjuntos. Combina con RFID o LPR para control de acceso completo.',
+     nota:'Recuerda agregar asta en Accesorios. KD2 = uso normal · K1 = uso intensivo.'},
+  ],
+  L03:[
+    {id:'sl',     icon:'🚗',lbl:'Corredera',    sub:'Deslizante',
+     specs:{peso:'Hasta 600 kg',velocidad:'2 seg (JF)',ciclos:'200–500/día',uso:'Acceso comercial intensivo'},
+     rec:'Para locales, bodegas y patios. JETFLEX 24V si hay cortes frecuentes de energía.',
+     nota:'Caquetá: JETFLEX 24V + NoBreak = operación garantizada sin importar la red.'},
+    {id:'sb',     icon:'🚪',lbl:'Batiente',     sub:'1 ó 2 hojas',
+     specs:{peso:'Hasta 200 kg/hoja',velocidad:'5 seg (JF)',ciclos:'100–300/día',uso:'Acceso peatonal comercial'},
+     rec:'Para oficinas o locales con acceso peatonal diferenciado. Modelo DUO para portones amplios.',
+     nota:'JETFLEX en uso intensivo. LEGERO si el presupuesto es el factor principal.'},
+    {id:'barrera',icon:'🚧',lbl:'Talanquera',   sub:'Control de acceso',
+     specs:{peso:'N/A · Brazo hasta 6m',velocidad:'1.5 seg (JF)',ciclos:'300–800/día',uso:'Parqueadero comercial'},
+     rec:'K1 o BARRIER según tráfico. Siempre incluir semáforo + fotocelda + control de acceso.',
+     nota:'Agregar cámara LPR o RFID para gestión de visitantes y empleados.'},
+    {id:'bhc',    icon:'🏭',lbl:'Seccional',    sub:'Bodega / local',
+     specs:{peso:'Hasta 450 kg',velocidad:'5.5 seg',ciclos:'50–150/día',uso:'Bodega comercial'},
+     rec:'Para locales con fachada tipo garaje o bodegas de distribución medianas.',
+     nota:'Requiere diagnóstico de altura disponible antes de comprometer la venta.'},
+  ],
+  L04:[
+    {id:'sl',     icon:'🏭',lbl:'Corredera Ind.',sub:'Alta capacidad',
+     specs:{peso:'Hasta 1.000 kg+',velocidad:'2 seg (JF)',ciclos:'500–1.500/día',uso:'Industrial · 24/7'},
+     rec:'JETFLEX BRUSHLESS = máxima durabilidad y mínimo mantenimiento en industria.',
+     nota:'Portones > 600kg verificar DZ Industrial / DZ Brutalle antes de comprometer.'},
+    {id:'barrera',icon:'🚧',lbl:'Talanquera',    sub:'Tráfico pesado',
+     specs:{peso:'N/A · Brazo hasta 6m',velocidad:'<1 seg (BARRIER Pro)',ciclos:'500–2.000/día',uso:'Planta · Logística'},
+     rec:'BARRIER Pro para vehículos pesados. K1 Plus para accesos estándar industriales con trazabilidad.',
+     nota:'Siempre con cámara LPR para registro de placas. Conectar a sistema de control de acceso.'},
+    {id:'bhc',    icon:'🏗',lbl:'Seccional Ind.',sub:'Muelle / nave',
+     specs:{peso:'Hasta 450 kg',velocidad:'5.5 seg',ciclos:'100–300/día',uso:'Muelle de carga · Nave'},
+     rec:'Para muelles de carga y naves industriales de tamaño medio.',
+     nota:'Portones de gran tamaño requieren diagnóstico presencial. No comprometer sin medición.'},
+  ]
+};
+
+// Estado del tipo seleccionado
+let tipoSel = '';
+
+function renderTiposSegmento(){
+  const seg = segActual.code||'L01';
+  const tipos = TIPOS_POR_SEG[seg]||TIPOS_POR_SEG['L01'];
+  const container = document.getElementById('tipo-chips');
+  container.innerHTML = tipos.map(t=>`
+    <div class="tipo-chip" id="tc-${t.id}" onclick="selTipo('${t.id}')">
+      <div class="tipo-chip-icon">${t.icon}</div>
+      <div class="tipo-chip-lbl">${t.lbl}</div>
+      <div class="tipo-chip-sub">${t.sub}</div>
+    </div>`).join('');
+  document.getElementById('tipo-ficha').classList.remove('vis');
+  document.getElementById('eq-rec').classList.remove('vis');
+  document.getElementById('eq-lista').innerHTML='';
+  tipoSel=''; equipoSel=null;
+}
+
+function selTipo(id){
+  tipoSel=id;
+  document.querySelectorAll('.tipo-chip').forEach(c=>c.classList.remove('sel'));
+  const chip=document.getElementById('tc-'+id);
+  if(chip) chip.classList.add('sel');
+  const seg=segActual.code||'L01';
+  const tipos=TIPOS_POR_SEG[seg]||TIPOS_POR_SEG['L01'];
+  const tipo=tipos.find(t=>t.id===id);
+  if(tipo){
+    const sp=tipo.specs;
+    document.getElementById('tipo-ficha').innerHTML=`
+      <div class="tipo-ficha-titulo">📊 ${tipo.lbl} — Parámetros técnicos</div>
+      <div class="tipo-specs">
+        <div class="tipo-spec"><div class="tipo-spec-lbl">Capacidad de peso</div><div class="tipo-spec-val">${sp.peso}</div></div>
+        <div class="tipo-spec"><div class="tipo-spec-lbl">Velocidad apertura</div><div class="tipo-spec-val ok">${sp.velocidad}</div></div>
+        <div class="tipo-spec"><div class="tipo-spec-lbl">Ciclos recomendados</div><div class="tipo-spec-val warn">${sp.ciclos}</div></div>
+        <div class="tipo-spec"><div class="tipo-spec-lbl">Uso ideal</div><div class="tipo-spec-val" style="font-size:10px">${sp.uso}</div></div>
+      </div>`;
+    document.getElementById('tipo-ficha').classList.add('vis');
+    const rec=document.getElementById('eq-rec');
+    rec.textContent='💡 '+tipo.rec; rec.classList.add('vis');
+    cargarEquipos(id, tipo);
+  }
+}
+
+// ══════════════════════════════════════
+// ACCESORIOS
+// ══════════════════════════════════════
+const ACCS = {
+  // ── SEÑALIZACIÓN ─────────────────────────────────────────────
+  sen:[
+    {id:'slux',    n:'Semáforo Sinaleira LUX',      sku:'A36395',    p:169000,  def:true,  qty:false},
+    {id:'sce',     n:'Semáforo CE (12-240V)',        sku:'A408164',   p:138000,  def:false, qty:false},
+    {id:'rele',    n:'Módulo Relé (para semáforos)', sku:'A02034',    p:38000,   def:true,  qty:false},
+    {id:'rele2',   n:'Temporizador Trava DOG 127V',  sku:'A02275',    p:38000,   def:false, qty:false},
+    {id:'rele3',   n:'Temporizador Trava DOG 220V',  sku:'A02276',    p:38000,   def:false, qty:false},
+    {id:'prodelay',n:'PRODELAY — Retardo 1-30 seg',  sku:'PRODELAY',  p:31200,   def:false, qty:false},
+  ],
+  // ── FOTOCELDAS ───────────────────────────────────────────────
+  foto:[
+    {id:'f32c',    n:'Fotocelda F32 Compacta (unidad)',   sku:'A22161',    p:130000,  def:false, qty:true},
+    {id:'f32p',    n:'Fotocelda F32 Plus (unidad)',        sku:'A22186',    p:170000,  def:false, qty:true},
+    {id:'f10r',    n:'Fotocelda F10-R Reflectiva',   sku:'A21907',    p:292000,  def:false, qty:false},
+  ],
+  // ── ASTAS TALANQUERA ─────────────────────────────────────────
+  asta:[
+    {id:'asta-3n', n:'Asta Slim 3m Natural',         sku:'A19906',    p:354000,  def:false, qty:true},
+    {id:'asta-3b', n:'Asta Slim 3m Blanco',           sku:'A19601',    p:430000,  def:false, qty:true},
+    {id:'asta-3l', n:'Asta Slim 3m con LED',          sku:'A19417',    p:992000,  def:false, qty:true},
+    {id:'asta-4b', n:'Asta Slim 4m Blanco',           sku:'A19604',    p:662000,  def:false, qty:true},
+    {id:'asta-4l', n:'Asta Slim 4m con LED',          sku:'A19420',    p:1247000, def:false, qty:true},
+    {id:'asta-r3', n:'Asta Rectangular 3m',           sku:'A17068',    p:431000,  def:false, qty:true},
+    {id:'asta-r3l',n:'Asta Rectangular 3m con LED',   sku:'F60010002', p:1092000, def:false, qty:true},
+    {id:'asta-r4', n:'Asta Rectangular 4m sin unión', sku:'A170744M',  p:738000,  def:false, qty:true},
+    {id:'asta-r5', n:'Asta Rectangular 5m sin unión', sku:'A170745M',  p:754000,  def:false, qty:true},
+    {id:'asta-r6', n:'Asta Rectangular 6m',           sku:'A17074',    p:846000,  def:false, qty:true},
+    {id:'asta-r6l',n:'Asta Rectangular 6m con LED',   sku:'F60010008', p:1646000, def:false, qty:true},
+    {id:'asta-art',n:'Asta Articulada 6m',             sku:'F05234',    p:985000,  def:false, qty:true},
+    {id:'asta-goma',n:'Goma de seguridad para asta',  sku:'A08GS001',  p:85000,   def:false, qty:true},
+    {id:'asta-led', n:'Kit iluminación LED para asta', sku:'A08LED01',  p:145000,  def:false, qty:true},
+    {id:'bc1-ram',  n:'Rampa BC1 × 1 metro',          sku:'A18740',    p:338000,  def:false, qty:true},
+  ],
+  // ── PROTECCIÓN ELÉCTRICA ──────────────────────────────────────
+  prot:[
+    {id:'pred',    n:'Protector de Red Eléctrica Bivolt',sku:'A26409',  p:45000,   def:false, qty:false},
+    {id:'pfil1',   n:'Protector con Filtro 127V',        sku:'A36417',  p:262000,  def:false, qty:false},
+    {id:'pfil2',   n:'Protector con Filtro 220V',        sku:'A36418',  p:262000,  def:false, qty:false},
+    {id:'nbr1',    n:'NoBreak Brushless 127V',            sku:'A22073',  p:693000,  def:false, qty:false},
+    {id:'nbr2',    n:'NoBreak Brushless 220V',            sku:'A22068',  p:693000,  def:false, qty:false},
+    {id:'nvg1',    n:'NoBreak VolGate Industrial 127V',   sku:'A21923',  p:1384000, def:false, qty:false},
+    {id:'nvg2',    n:'NoBreak VolGate Industrial 220V',   sku:'A21903',  p:1384000, def:false, qty:false},
+    {id:'bat12',   n:'Batería 12V 1.2Ah AGM',             sku:'3012V012',p:52000,   def:false, qty:true},
+    {id:'bat5',    n:'Batería 12V 5Ah AGM',               sku:'3112V05A',p:84000,   def:false, qty:true},
+    {id:'bat9',    n:'Batería 12V 9Ah AGM',               sku:'3012V09A',p:132000,  def:false, qty:true},
+    {id:'reg1',    n:'Regulador de Voltaje 1000W 127V',   sku:'63MF1000',p:354000,  def:false, qty:false},
+    {id:'reg2',    n:'Regulador de Voltaje 2000W 127V',   sku:'63MF2000',p:492000,  def:false, qty:false},
+  ],
+  // ── CONECTIVIDAD ──────────────────────────────────────────────
+  con:[
+    {id:'ppaon',   n:'PPA ON — Alexa/Google Home',   sku:'A408115',   p:185000,  def:false, qty:false},
+    {id:'wifi',    n:'Contatto Wi-Fi',                sku:'A36422',    p:185000,  def:false, qty:false},
+    {id:'gsm',     n:'Módulo GSM 4G Remoto',          sku:'RTU',       p:423000,  def:false, qty:false},
+    {id:'rfal',    n:'Receptor RF Alcance 433MHz',    sku:'A36379',    p:146000,  def:false, qty:false},
+    {id:'rfuniv',  n:'Receptor RF Universal XBREC2',  sku:'XBREC2',    p:152000,  def:false, qty:false},
+    {id:'matrix',  n:'Receptor Matrix 999 controles', sku:'A21774',    p:362000,  def:false, qty:false},
+    {id:'smart1',  n:'Controlador Smart ON',          sku:'A408086',   p:62000,   def:false, qty:false},
+    {id:'smart2',  n:'Interruptor 1 canal Smart ON',  sku:'A408089',   p:70000,   def:false, qty:false},
+    {id:'smart3',  n:'Interruptor 2 canales Smart ON',sku:'A408087',   p:92000,   def:false, qty:false},
+    {id:'ir',      n:'Receptor Universal Smart IR',   sku:'A408002',   p:94000,   def:false, qty:false},
+    {id:'touch',   n:'Interruptor TOUCH Smart WiFi',  sku:'A408010',   p:140000,  def:false, qty:false},
+    {id:'bulb',    n:'Bombillo LED RGB Smart',        sku:'A408001',   p:62000,   def:false, qty:true},
+    {id:'toma',    n:'Toma Smart 127/220V',           sku:'A408003',   p:78000,   def:false, qty:true},
+  ],
+  // ── CONTROLES ─────────────────────────────────────────────────
+  ctrl:[
+    {id:'gmax',    n:'Control G-Max 3 botones',       sku:'A22471',    p:23000,   def:false, qty:true},
+    {id:'txslim',  n:'Control TX Slim 3 botones',     sku:'A408114',   p:46000,   def:false, qty:true},
+    {id:'zap2',    n:'Control ZAP 2 botones',         sku:'A22324',    p:46000,   def:false, qty:true},
+    {id:'zap4',    n:'Control ZAP 4 botones',         sku:'A22213',    p:60000,   def:false, qty:true},
+    {id:'txst',    n:'Control TX Stone 3 botones',    sku:'A22637',    p:48000,   def:false, qty:true},
+    {id:'zapbr1',  n:'Control ZAP-BR1 4 botones',     sku:'A22606',    p:60000,   def:false, qty:true},
+    {id:'goodl',   n:'GOOD LIGHT — Transmisor vehicular',sku:'A22196', p:60000,   def:false, qty:true},
+  ],
+  // ── CREMALLERAS ───────────────────────────────────────────────
+  crem:[
+    {id:'crem-pop',  n:'Cremallera Residencial POP (1m)',  sku:'A16768',  p:40000,  def:false, qty:true},
+    {id:'crem-gold', n:'Cremallera Residencial GOLD (1m)', sku:'A16771',  p:60000,  def:false, qty:true},
+    {id:'crem-ind',  n:'Cremallera Industrial GOLD (1m)',  sku:'A16811',  p:102000, def:false, qty:true},
+    {id:'crem-ace',  n:'Cremallera Acero (1m)',            sku:'P31394',  p:54000,  def:false, qty:true},
+    {id:'crem-rac',  n:'Cremallera Puerta Social RAC (55cm)',sku:'A17988',p:130000, def:false, qty:true},
+  ],
+  // ── CENTRALES ELECTRÓNICAS ────────────────────────────────────
+  central:[
+    {id:'agpop',   n:'Central Agility POP Mono 1HP',      sku:'A22620',  p:240000,  def:false, qty:false},
+    {id:'agce',    n:'Central Agility CE Híbrida 1HP',    sku:'A22683',  p:276000,  def:false, qty:false},
+    {id:'agplus',  n:'Central Agility PLUS Mono 1HP',     sku:'A22207',  p:348000,  def:false, qty:false},
+    {id:'agroll',  n:'Central Agility Rollity 1HP',       sku:'A22598',  p:360000,  def:false, qty:false},
+    {id:'dupla',   n:'Central Dupla 5T 1HP',              sku:'A21851',  p:428000,  def:false, qty:false},
+    {id:'agleg',   n:'Central Agility Legero',            sku:'A22617',  p:348000,  def:false, qty:false},
+    {id:'trifull', n:'Central Triflex Full Range S/Display',sku:'A22618',p:640000,  def:false, qty:false},
+    {id:'trifuld', n:'Central Triflex Full Range C/Display',sku:'A22619',p:685000,  def:false, qty:false},
+    {id:'triind',  n:'Central Triflex IND 2HP',           sku:'A22131',  p:960000,  def:false, qty:false},
+    {id:'trbr',    n:'Central Triflex Connect Brushless',  sku:'A22105',  p:640000,  def:false, qty:false},
+    {id:'psbrac',  n:'Central PS Brushless AC',           sku:'A22070',  p:1116000, def:false, qty:false},
+    {id:'tribr24', n:'Central Triflex Brushless 24V',     sku:'A21867',  p:880000,  def:false, qty:false},
+    {id:'psbr24',  n:'Central PS Brushless 24V',          sku:'A22376',  p:1116000, def:false, qty:false},
+    {id:'progcen', n:'Programador de Funciones',          sku:'A21904',  p:330000,  def:false, qty:false},
+  ],
+  // ── ELECTROCERRRADURAS ────────────────────────────────────────
+  elec:[
+    {id:'travuno', n:'Trava UNO Reversible 12VDC',        sku:'F2002001', p:196000, def:false, qty:false},
+    {id:'travdog1',n:'Trava DOG Steel 127V',               sku:'F15210004',p:200000, def:false, qty:false},
+    {id:'travdog2',n:'Trava DOG Steel 220V',               sku:'F15210006',p:200000, def:false, qty:false},
+    {id:'electroi',n:'Electroimán 400 lbs 12VDC',          sku:'F1510006', p:215000, def:false, qty:false},
+    {id:'sopU',    n:'Soporte en U-P200',                  sku:'A17886',   p:54000,  def:false, qty:false},
+    {id:'cierrap', n:'Cierra Puerta Mola F3 (85kg)',       sku:'A408053',  p:109000, def:false, qty:false},
+  ],
+  // ── BOTONERAS ─────────────────────────────────────────────────
+  boton:[
+    {id:'btnace',  n:'Botón pulsador acero perfil delgado',sku:'A408096',  p:34000,  def:false, qty:true},
+    {id:'btnace2', n:'Botón pulsador acero NO',            sku:'A418106',  p:38000,  def:false, qty:true},
+    {id:'btnnt',   n:'Botón No Touch NO-COM-NC 12VDC',     sku:'A418103',  p:45000,  def:false, qty:true},
+    {id:'btnemer', n:'Botón parada de emergencia NC',      sku:'BOX1A',    p:47000,  def:false, qty:true},
+    {id:'bot1',    n:'Botonera cableada 1 pulsador',       sku:'AYC25200', p:34000,  def:false, qty:true},
+    {id:'bot2',    n:'Botonera cableada 2 pulsadores',     sku:'AYC25300', p:55000,  def:false, qty:true},
+    {id:'bot3',    n:'Botonera 3 botones cortina BR1',     sku:'C16158',   p:90000,  def:false, qty:true},
+  ],
+  // ── CONTROL DE ACCESO ─────────────────────────────────────────
+  acceso:[
+    {id:'ctrlip',  n:'Controladora IP WIDE (4 puertas)',   sku:'A408117',  p:614000,  def:false, qty:false},
+    {id:'facial',  n:'Controladora Facial IP 20.000 users',sku:'A418201',  p:1384000, def:false, qty:false},
+    {id:'rfid125', n:'Lector RFID 125KHz WAVE',           sku:'A408095',  p:92000,   def:false, qty:true},
+    {id:'rfid13',  n:'Lector RFID 13.56MHz WAVE',         sku:'A408094',  p:122000,  def:false, qty:true},
+    {id:'uhf',     n:'Lector UHF 12 metros',              sku:'A408122',  p:1508000, def:false, qty:false},
+    {id:'stdaln1', n:'Standalone WAVE 125KHz (500 users)', sku:'A408093',  p:199000,  def:false, qty:false},
+    {id:'stdaln2', n:'Standalone WAVE 13.56MHz',          sku:'A408092',  p:214000,  def:false, qty:false},
+    {id:'lpr',     n:'Cámara LPR Reconocimiento Placas',  sku:'A408640',  p:2846000, def:false, qty:false},
+    {id:'tag-uhf', n:'Etiqueta UHF TAG',                  sku:'A408125',  p:5600,    def:false, qty:true},
+    {id:'tag-125', n:'Tarjeta RFID 125KHz',               sku:'A408123',  p:1500,    def:false, qty:true},
+    {id:'tag-13',  n:'Tarjeta RFID 13.56MHz',             sku:'A408127',  p:3000,    def:false, qty:true},
+    {id:'llave125',n:'Tag llavero 125KHz',                sku:'A408124',  p:1500,    def:false, qty:true},
+    {id:'llave13', n:'Tag llavero 13.56MHz',              sku:'4505001819',p:3000,   def:false, qty:true},
+  ],
+  // ── ALARMAS Y DOMÓTICA ────────────────────────────────────────
+  alarma:[
+    {id:'hook',    n:'Alarma Comunitaria HOOK WiFi/4G',   sku:'A408140',  p:2000000, def:false, qty:false},
+    {id:'alc36',   n:'Alarma PPA ON C36 Smart (4 zonas)', sku:'A408720',  p:340000,  def:false, qty:false},
+    {id:'alc40',   n:'Alarma PPA ON C40 Smart (8 zonas)', sku:'A408032',  p:400000,  def:false, qty:false},
+    {id:'lpiso1',  n:'Central Lazo Inductivo 1 canal',    sku:'A418200',  p:444000,  def:false, qty:false},
+    {id:'lpiso2',  n:'Central Lazo Inductivo 2 canales',  sku:'A418202',  p:685000,  def:false, qty:false},
+    {id:'lind',    n:'Lazo Inductivo de piso',            sku:'A408131',  p:185000,  def:false, qty:true},
+    {id:'pirca',   n:'Sensor PIR Cableado 9-18VDC',       sku:'A408046',  p:84000,   def:false, qty:true},
+    {id:'pirrf',   n:'Sensor PIR Inalámbrico 433MHz',     sku:'A408056',  p:94000,   def:false, qty:true},
+    {id:'magn',    n:'Sensor Magnético Inalámbrico',      sku:'A408069',  p:58000,   def:false, qty:true},
+    {id:'sirena',  n:'Sirena Deton 120dB',                sku:'A408037',  p:42000,   def:false, qty:false},
+  ],
+  // ── CÁMARAS WIFI PPA ON ───────────────────────────────────────
+  camwifi:[
+    {id:'cam360i', n:'Cámara 360° Interna Smart ON WiFi', sku:'A408636',  p:185000,  def:false, qty:true},
+    {id:'cambul',  n:'Cámara Bullet Externa Smart ON WiFi',sku:'A408311',  p:200000,  def:false, qty:true},
+    {id:'camptz',  n:'Cámara 360° PTZ Externa Smart ON',  sku:'A408637',  p:232000,  def:false, qty:true},
+  ],
+  // ── CÁMARAS IP ────────────────────────────────────────────────
+  camip:[
+    {id:'domo-rtmp',  n:'Domo IP RTMP Onvif 4MPX 2.8mm',    sku:'A408142',   p:154000,  def:false, qty:true},
+    {id:'bul-rtmp',   n:'Bullet IP RTMP Onvif 4MPX 3.6mm',  sku:'A408141',   p:154000,  def:false, qty:true},
+    {id:'domo-5m',    n:'Domo IP Onvif 5MPX 2.8mm',         sku:'A408047',   p:154000,  def:false, qty:true},
+    {id:'bul-5m',     n:'Bullet IP Onvif 5MPX 3.6mm',       sku:'A408048',   p:154000,  def:false, qty:true},
+    {id:'domo-ia',    n:'Domo FullTime IA 4MPX 2.8mm',      sku:'A408209',   p:216000,  def:false, qty:true},
+    {id:'bul-ia',     n:'Bullet FullTime IA 4MPX 3.6mm',    sku:'A408310',   p:216000,  def:false, qty:true},
+    {id:'domo-ana',   n:'Domo Análoga 4en1 2MPX',           sku:'4416004611',p:64000,   def:false, qty:true},
+    {id:'bul-ana',    n:'Bullet Análoga 4en1 2MPX',         sku:'4416003811',p:64000,   def:false, qty:true},
+    {id:'domo-jc',    n:'Domo Jetcolor 4en1 Color 24H',     sku:'A408017',   p:80000,   def:false, qty:true},
+    {id:'bul-jc',     n:'Bullet Jetcolor 4en1 Color 24H',   sku:'A408016',   p:80000,   def:false, qty:true},
+  ],
+  // ── GRABADORES Y ACCESORIOS CCTV ─────────────────────────────
+  grabador:[
+    {id:'xvr4',    n:'Grabador XVR 4CH+2IP Detecc. Facial', sku:'A804001',   p:176000,  def:false, qty:false},
+    {id:'xvr8',    n:'Grabador XVR 8CH+2IP Detecc. Facial', sku:'A804002',   p:225000,  def:false, qty:false},
+    {id:'xvr16',   n:'Grabador XVR 16CH+2IP Detecc. Facial',sku:'A804003',   p:362000,  def:false, qty:false},
+    {id:'rack3',   n:'Rack Horizontal Pared 3U',             sku:'A22526',    p:315000,  def:false, qty:false},
+    {id:'rack5',   n:'Rack Horizontal Pared 5U',             sku:'A22527',    p:375000,  def:false, qty:false},
+    {id:'rack7',   n:'Rack Horizontal Pared 7U',             sku:'A22528',    p:446000,  def:false, qty:false},
+    {id:'balun',   n:'Par Video Balun Pasivo',               sku:'A408110',   p:7600,    def:false, qty:true},
+    {id:'fte12v2', n:'Fuente 12V 2 Amp',                    sku:'12V2AMP',   p:11000,   def:false, qty:true},
+    {id:'fte12v3', n:'Fuente 12V 3 Amp',                    sku:'12V3AMP',   p:30000,   def:false, qty:true},
+    {id:'fte12v5', n:'Fuente 12V 5 Amp',                    sku:'12V5AMP',   p:40000,   def:false, qty:true},
+    {id:'caja10',  n:'Caja de paso 10×10',                  sku:'10X10',     p:2000,    def:false, qty:true},
+  ],
+};
+
+
+// ══════════════════════════════════════
+// COLORES SEGMENTOS
+// ══════════════════════════════════════
+const SEG_COLORS = {L01:'#005293',L02:'#4D4F53',L03:'#F15A22',L04:'#981E32'};
+
+// ══════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════
+let asesorSel  = null;
+let equipoSel  = null;
+let accSel     = new Set();
+let accQty     = {};   // id -> cantidad (para accesorios con qty:true)
+let listaPrecios = 'final';
+let fotoDataUrl  = null;
+let linkActual   = '';
+let segActual    = {code:'', nombre:'', icon:''};
+let currentStep  = 1;
+
+function precioMostrar(p){ return listaPrecios === 'inst' ? Math.round(p/1.35) : p; }
+function fmtCOP(n){ return '$' + Math.round(n).toLocaleString('es-CO'); }
+
+// ══════════════════════════════════════
+// INIT — sin JSONBin, todo local + Sheets + Bitrix
+// ══════════════════════════════════════
+async function init(){
+  document.getElementById('consecBadge').textContent = generarID();
+  cargarPreciosSheets();
+  renderAsesores();
+}
+
+// ══════════════════════════════════════
+// CONSECUTIVO — localStorage
+// ══════════════════════════════════════
+function getConsec(){
+  return parseInt(localStorage.getItem('ppa_consec')||'1');
+}
+function setConsec(n){
+  localStorage.setItem('ppa_consec', n);
+}
+function updateConsecUI(n){
+  const id = 'WEB-PPA-'+String(n).padStart(4,'0');
+  document.getElementById('consecBadge').textContent = id;
+  return id;
+}
+
+// ══════════════════════════════════════
+// HISTORIAL — localStorage + Bitrix24
+// El historial real vive en Bitrix como negociaciones
+// localStorage es caché local del dispositivo
+// ══════════════════════════════════════
+function saveHist(entry){
+  try{
+    // Serializar a JSON puro para evitar problemas en iOS Safari
+    const entryClean = JSON.parse(JSON.stringify(entry));
+    let local = [];
+    try{ local = JSON.parse(localStorage.getItem('ppa_hist')||'[]'); }catch(e){ local=[]; }
+    local.unshift(entryClean);
+    if(local.length>100) local = local.slice(0,100);
+    localStorage.setItem('ppa_hist', JSON.stringify(local));
+  } catch(e){
+    console.warn('saveHist omitido:', e.message);
+  }
+}
+
+function syncCloud(){
+  showToast('📋 Historial guardado en Bitrix24 · Ver en Negociaciones');
+}
+
+
+// ══════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════
+function goStep(n){
+  currentStep = n;
+  for(let i=1;i<=4;i++){
+    const s = document.getElementById('s'+i);
+    s.classList.remove('active','done');
+    if(i===n) s.classList.add('active');
+    else if(i<n) s.classList.add('done');
+    document.getElementById('p'+i).classList.toggle('active', i===n);
+  }
+  document.querySelector('.content').scrollTop = 0;
+  if(n===2) guiaInit();
+}
+
+// ══════════════════════════════════════
+// SEGMENTOS
+// ══════════════════════════════════════
+function selSeg(code, nombre, desc, icon, btn){
+  segActual = {code, nombre, icon};
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+// ══════════════════════════════════════
+// LISTA DE PRECIOS
+// ══════════════════════════════════════
+function setLista(tipo){
+  listaPrecios = tipo;
+  document.getElementById('pt-final').classList.toggle('active', tipo==='final');
+  document.getElementById('pt-inst').classList.toggle('active', tipo==='inst');
+  if(tipoSel) cargarEquipos(tipoSel, null);
+  renderAccesorios();
+}
+
+// ══════════════════════════════════════
+// ASESORES
+// ══════════════════════════════════════
+function renderAsesores(){
+  document.getElementById('asesores-grid').innerHTML = ASESORES.map(a=>`
+    <div class="asesor-card" id="ac-${a.id}" onclick="selAsesor('${a.id}')">
+      <div class="asesor-sel-dot">✓</div>
+      <div class="asesor-foto">${a.foto?`<img src="${a.foto}" alt="${a.nombre}">`:`<span>${a.emoji}</span>`}</div>
+      <div class="asesor-nombre">${a.nombre}</div>
+      <div class="asesor-cargo">${a.cargo}</div>
+    </div>`).join('');
+}
+function selAsesor(id){
+  document.querySelectorAll('.asesor-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('ac-'+id).classList.add('selected');
+  asesorSel = ASESORES.find(a=>a.id===id);
+}
+
+// ══════════════════════════════════════
+// FOTO FACHADA
+// ══════════════════════════════════════
+function prevFoto(input){
+  const file = input.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    fotoDataUrl = e.target.result;
+    const img = document.getElementById('foto-prev-img');
+    img.src = fotoDataUrl; img.style.display='block';
+    document.querySelector('.foto-drop').style.display='none';
+  };
+  r.readAsDataURL(file);
+}
+
+// ══════════════════════════════════════
+// EQUIPOS — filtrado por tipo seleccionado
+// ══════════════════════════════════════
+function cargarEquipos(tipo, tipoObj){
+  const lista = document.getElementById('eq-lista');
+  const nota  = document.getElementById('eq-nota');
+  lista.innerHTML = ''; equipoSel = null;
+  if(!tipo){ nota.style.display='none'; return; }
+  const eqs = EQUIPOS[tipo]||[];
+  if(!eqs.length){ nota.style.display='none'; return; }
+
+  eqs.forEach(eq => {
+    const pM = precioMostrar(eq.p);
+    const pI = Math.round(eq.p/1.35);
+    const card = document.createElement('div');
+    card.className = 'eq-card'; card.id = 'eq-'+eq.id;
+    card.innerHTML = `
+      <div class="eq-sel-badge">✓ OK</div>
+      <div class="eq-img-box"><span>${eq.e}</span></div>
+      <div>
+        ${eq.badge?`<div style="font-size:8px;font-weight:700;color:var(--naranja);letter-spacing:.5px;margin-bottom:4px;text-transform:uppercase">${eq.badge}</div>`:''}
+        <div class="eq-nombre">${eq.n}</div>
+        <div class="eq-tags">
+          <span class="tag tag-n">${eq.tec}</span>
+          ${eq.kg?`<span class="tag tag-a">${eq.kg}kg</span>`:''}
+          ${eq.brazo?`<span class="tag tag-a">Brazo ${eq.brazo}</span>`:''}
+          ${eq.vel?`<span class="tag tag-a">⚡${eq.vel}</span>`:''}
+          ${eq.ciclos?`<span class="tag tag-r">${eq.ciclos}</span>`:''}
+          ${eq.v?`<span class="tag tag-v">${eq.v}</span>`:''}
+        </div>
+        <div class="eq-precio-box">
+          <div class="eq-precio-final">${fmtCOP(pM)}</div>
+          ${listaPrecios==='final'?`<div class="eq-precio-inst">Inst: ${fmtCOP(pI)}</div>`:'<div class="eq-precio-inst" style="color:var(--dorado)">Lista instalador</div>'}
+        </div>
+        <div class="eq-sku">${eq.sku} · ${eq.uso}</div>
+      </div>`;
+    card.onclick = () => selEq(eq, card);
+    lista.appendChild(card);
+  });
+
+  if(tipoObj && tipoObj.nota){
+    nota.style.display = 'block';
+    nota.textContent = '⚠ ' + tipoObj.nota;
+  } else {
+    nota.style.display = 'none';
+  }
+}
+
+function selEq(eq, card){
+  document.querySelectorAll('.eq-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  equipoSel = eq;
+}
+
+// ══════════════════════════════════════
+// ACCESORIOS (con soporte de cantidad)
+// ══════════════════════════════════════
+function renderAccesorios(){
+  renderAccGroup('acc-sen',  ACCS.sen);
+  renderAccGroup('acc-foto', ACCS.foto);
+  renderAccGroup('acc-asta', ACCS.asta);
+  renderAccGroup('acc-prot', ACCS.prot);
+  renderAccGroup('acc-con',  ACCS.con);
+  renderAccGroup('acc-ctrl', ACCS.ctrl);
+}
+
+function renderAccGroup(cid, items){
+  const c = document.getElementById(cid); c.innerHTML='';
+  items.forEach(a => {
+    if(a.def) accSel.add(a.id);
+    const isOn = accSel.has(a.id);
+    const qty  = accQty[a.id]||1;
+    const pM   = precioMostrar(a.p);
+    const d    = document.createElement('div');
+    d.className = 'acc-item'+(isOn?' on':''); d.id = 'ai-'+a.id;
+
+    if(a.qty){
+      // Accesorio con control de cantidad
+      d.innerHTML = `
+        <div class="acc-check">${isOn?'✅':'⬜'}</div>
+        <div style="flex:1">
+          <div class="acc-nom">${a.n}</div>
+          <div class="acc-pre">${fmtCOP(pM)} · ${a.sku}</div>
+          <div class="acc-qty-row" id="aqr-${a.id}" style="display:${isOn?'flex':'none'}">
+            <button class="acc-qty-btn" onclick="chgQty(event,'${a.id}',${a.p},-1)">−</button>
+            <span class="acc-qty-num" id="aqn-${a.id}">${qty}</span>
+            <button class="acc-qty-btn" onclick="chgQty(event,'${a.id}',${a.p},1)">+</button>
+            <span class="acc-qty-subt" id="aqs-${a.id}">${isOn?fmtCOP(pM*qty):''}</span>
+          </div>
+        </div>`;
+    } else {
+      d.innerHTML = `
+        <div class="acc-check">${isOn?'✅':'⬜'}</div>
+        <div class="acc-nom">${a.n}</div>
+        <div class="acc-pre">${fmtCOP(pM)} · ${a.sku}</div>`;
+    }
+    d.onclick = (e) => {
+      if(e.target.classList.contains('acc-qty-btn')) return;
+      toggleAcc(a, d);
+    };
+    c.appendChild(d);
+  });
+}
+
+function toggleAcc(a, div){
+  if(accSel.has(a.id)){
+    accSel.delete(a.id);
+    div.classList.remove('on');
+    div.querySelector('.acc-check').textContent = '⬜';
+    const qr = document.getElementById('aqr-'+a.id);
+    if(qr) qr.style.display='none';
+  } else {
+    accSel.add(a.id);
+    div.classList.add('on');
+    div.querySelector('.acc-check').textContent = '✅';
+    const qr = document.getElementById('aqr-'+a.id);
+    if(qr){
+      qr.style.display='flex';
+      if(!accQty[a.id]) accQty[a.id]=1;
+      document.getElementById('aqs-'+a.id).textContent = fmtCOP(precioMostrar(a.p)*(accQty[a.id]||1));
+    }
+  }
+}
+
+function chgQty(e, id, p, delta, grupoId){
+  e.stopPropagation();
+  accQty[id] = Math.max(1, (accQty[id]||1)+delta);
+  document.getElementById('aqn-'+id).textContent = accQty[id];
+  document.getElementById('aqs-'+id).textContent = fmtCOP(precioMostrar(p)*accQty[id]);
+  if(grupoId) actualizarContadorAcordeon(grupoId);
+}
+
+// ══════════════════════════════════════
+// NOMBRE DE ARCHIVO CON MARKETING
+// ══════════════════════════════════════
+function nombreArchivoMarketing(nombre, cotID){
+  const frases = [
+    'Tu_Sistema_PPA_Automatizado',
+    'Propuesta_Tecnologia_Alta_Velocidad',
+    'Acceso_Inteligente_PPA_Central',
+    'Tu_Puerta_Automatica_Lista',
+    'Sistema_Seguridad_PPA_Colombia',
+  ];
+  const frase = frases[Math.floor(Math.random()*frases.length)];
+  const cli = (nombre||'Cliente').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_ÁáÉéÍíÓóÚúÑñ]/g,'');
+  return `${frase}_${cli}_${cotID}`;
+}
+
+// ══════════════════════════════════════
+// GENERAR PROPUESTA
+// ══════════════════════════════════════
+function generarProp(){
+  if(!equipoSel){ showToast('⚠ Selecciona un equipo'); goStep(2); return; }
+
+  const nombre = document.getElementById('c-nombre').value.trim()||'Cliente';
+  const ciudad = document.getElementById('c-ciudad').value.trim()||'Colombia';
+  const tipo   = document.getElementById('c-tipo').value||'Propiedad';
+  const obs    = document.getElementById('c-obs').value.trim();
+  const esInst = listaPrecios==='inst';
+  const consec = document.getElementById('consecBadge').textContent;
+  const fecha  = new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+
+  // Fachada
+  const fachadaEl = document.getElementById('prop-fachada');
+  if(fotoDataUrl){ fachadaEl.src=fotoDataUrl; fachadaEl.classList.add('vis'); }
+  else { fachadaEl.classList.remove('vis'); }
+
+  // Hero
+  document.getElementById('ph-consec').textContent = `${consec} · PPA Central`;
+  document.getElementById('ph-sub').textContent = `Tecnología ${equipoSel.tec} · PPA`;
+  document.getElementById('ph-cliente').textContent = nombre;
+  document.getElementById('ph-tipo').textContent = tipo;
+  document.getElementById('ph-ciudad').textContent = ciudad;
+  document.getElementById('ph-fecha').textContent = `Colombia · ${fecha}`;
+
+  // Asesor
+  if(asesorSel){
+    document.getElementById('pa-foto-el').innerHTML = asesorSel.foto
+      ? `<img src="${asesorSel.foto}" alt="${asesorSel.nombre}">` : `<span>${asesorSel.emoji}</span>`;
+    document.getElementById('pa-nombre-el').textContent = asesorSel.nombre;
+    document.getElementById('pa-cargo-el').textContent  = asesorSel.cargo;
+    document.getElementById('prop-asesor-box').style.display = 'flex';
+  } else { document.getElementById('prop-asesor-box').style.display = 'none'; }
+
+  // Badge instalador
+  document.getElementById('inst-badge').classList.toggle('vis', esInst);
+  document.getElementById('pts-lista').textContent = esInst ? 'Precio instalador · Confidencial' : 'PSVP · Referencia usuario final';
+
+  // ══ ARQUITECTURA 3 ACTOS ══
+  // ACTO 1 — Frase del dolor (random por segmento)
+  const FRASES_SEGMENTO = {
+    L01:[
+      `La seguridad de tu familia no debería depender de que recuerdes cerrar.`,
+      `Bajarte del carro para abrir un portón en 2026 es opcional. Tú decides.`,
+      `Tu hogar merece una entrada a la altura de lo que hay adentro.`,
+      `Tu casa ya sabe que llegaste. Ahora puede recibirte como mereces.`,
+      `Lo que protege a los tuyos no debería pedirte esfuerzo. Debería simplemente funcionar.`,
+    ],
+    L02:[
+      `Un conjunto que no registra quién entra, no puede demostrar quién salió.`,
+      `Cuando el acceso funciona, nadie lo nota. Cuando falla, todos te llaman a ti.`,
+      `No piden más reuniones. Piden que la puerta abra. Siempre.`,
+      `Un acceso que falla es silencioso al principio. Después, lo único de lo que habla todo el conjunto.`,
+      `Cada apertura, registrada. Cada reclamo, respondido. Sin drama, con datos.`,
+    ],
+    L03:[
+      `La imagen de tu empresa empieza en la puerta. ¿Qué dice la tuya hoy?`,
+      `Tu operación no puede esperar a que alguien encuentre las llaves.`,
+      `Velocidad, control y registro — lo que toda operación profesional necesita en su acceso.`,
+      `Un acceso industrial sin automatización es un cuello de botella disfrazado de costumbre.`,
+      `Tu operación no se detiene por dentro. La entrada tampoco debería hacerlo.`,
+    ],
+    L04:[
+      `La imagen de tu empresa empieza en la puerta. ¿Qué dice la tuya hoy?`,
+      `Tu operación no puede esperar a que alguien encuentre las llaves.`,
+      `Velocidad, control y registro — lo que toda operación profesional necesita en su acceso.`,
+      `Un acceso industrial sin automatización es un cuello de botella disfrazado de costumbre.`,
+      `Tu operación no se detiene por dentro. La entrada tampoco debería hacerlo.`,
+    ],
+  };
+  const segCode = segActual?.code || 'L01';
+  const pool = FRASES_SEGMENTO[segCode] || FRASES_SEGMENTO.L01;
+  const fraseDolor = pool[Math.floor(Math.random() * pool.length)];
+
+  // ACTO 2 — Descripción del motor recomendado (por tecnología)
+  const MOTORES_DESC = {
+    'JETFLEX 24V':       `Por eso te recomendamos el <strong>${equipoSel.n}</strong> — motor de alta velocidad con tecnología 24V que opera hasta <strong>200 ciclos sin energía eléctrica</strong>. Apertura en 2 segundos. Control desde app. Tu operación no se detiene ante nada.`,
+    'JETFLEX':           `Por eso te recomendamos el <strong>${equipoSel.n}</strong> — motor de ultra alta velocidad, preciso, robusto y diseñado para quienes no negocian con el rendimiento. La tecnología más rápida del mercado, en tu acceso.`,
+    'JETFLEX BRUSHLESS': `Por eso te recomendamos el <strong>${equipoSel.n}</strong> — tecnología Brushless que elimina el desgaste mecánico. Doble autonomía, mínimo mantenimiento, máxima operación. Rentabilidad real desde el primer ciclo.`,
+    'LEGERO':            `Por eso te recomendamos el <strong>${equipoSel.n}</strong> — sincronización perfecta motor-central con encoder patentado PPA. Velocidad, precisión y un sistema que se paga solo con cada apertura.`,
+    'MONO':              `Por eso te recomendamos el <strong>${equipoSel.n}</strong> — motor de cierre suave, silencioso y preciso. Bajo costo de mantenimiento, larga vida útil. La relación costo-beneficio más inteligente del mercado.`,
+  };
+  const motorDesc = MOTORES_DESC[equipoSel.tec]
+    || `Por eso te recomendamos el <strong>${equipoSel.n}</strong> — tecnología ${equipoSel.tec}, diseñada para dar exactamente lo que tu acceso necesita: rendimiento, seguridad y estatus.`;
+
+  // ACTO 3 — Promesa PPA universal (siempre cierra)
+  const PROMESA_PPA = `<em style="color:var(--naranja3);font-size:11.5px;line-height:1.8;display:block;margin-top:10px;border-top:1px solid rgba(232,92,0,.2);padding-top:10px">Abre cuando debe abrir. Cierra cuando debe cerrar. Sin drama, sin excusas.<br>PPA lleva más de 40 años diseñando accesos que funcionan exactamente como los esperas — y a la altura de lo que mereces.</em>`;
+
+  // Armar el bloque AIDA final
+  const aidaQ = fraseDolor;
+  const aidaP = motorDesc
+    + (obs ? `<br><br><em style="color:#666;font-size:11px">📌 Nota técnica: ${obs}</em>` : '')
+    + PROMESA_PPA;
+
+  document.getElementById('pa-q').textContent = aidaQ;
+  document.getElementById('pa-p').innerHTML   = aidaP;
+
+  // Equipo card — ocultar si es selección personalizada
+  const peqBox = document.getElementById('peq-nombre')?.closest('.peq-box, .prop-eq-card, [id^="peq"]')?.parentElement;
+  if(equipoSel.id === 'custom'){
+    document.getElementById('peq-nombre').textContent = 'Selección de productos PPA';
+    document.getElementById('peq-tec').textContent    = 'Varios';
+    document.getElementById('peq-img').innerHTML      = '<span>🔧</span>';
+    document.getElementById('peq-desc').innerHTML     = `${tipo} · ${ciudad}`;
+  } else {
+    document.getElementById('peq-nombre').textContent = equipoSel.n;
+    document.getElementById('peq-tec').textContent    = equipoSel.tec;
+    document.getElementById('peq-img').innerHTML      = `<span>${equipoSel.e}</span>`;
+    document.getElementById('peq-desc').innerHTML     = `${tipo} · ${ciudad}<br><strong>${equipoSel.vel?'⚡ '+equipoSel.vel+' · ':''} ${equipoSel.v||''} ${equipoSel.kg?'· '+equipoSel.kg+'kg':''}</strong>`;
+  }
+
+  // Rows + total
+  const todosAcc = Object.values(ACCS).flat();
+  let total = precioMostrar(equipoSel.p);
+  // Solo mostrar fila del equipo si NO es selección personalizada
+  let rowsHTML = equipoSel.id === 'custom' ? '' :
+    `<div class="prop-row"><div><div class="prn">${equipoSel.n}</div><div class="prsku">${equipoSel.sku} · <span style="color:var(--naranja2);font-size:8px;font-weight:700">${equipoSel.tec}</span></div></div><div class="prp">${fmtCOP(precioMostrar(equipoSel.p))}</div></div>`;
+
+  accSel.forEach(id => {
+    const a = todosAcc.find(x=>x.id===id);
+    if(a){
+      const qty = (a.qty && accQty[id]) ? (accQty[id]||1) : 1;
+      const sub = precioMostrar(a.p)*qty;
+      total += sub;
+      rowsHTML += `<div class="prop-row"><div><div class="prn">${a.n}${qty>1?` ×${qty}`:''}</div><div class="prsku">${a.sku}</div></div><div class="prp">${fmtCOP(sub)}</div></div>`;
+    }
+  });
+  document.getElementById('prop-rows').innerHTML = rowsHTML;
+  document.getElementById('prop-total-num').textContent = fmtCOP(total);
+
+  // Ventaja
+  const ventajas = {
+    'JETFLEX 24V':      {t:'⚡ Ventaja Tecnología 24V',      p:`Cortes o fluctuaciones, el sistema opera con baterías hasta <strong>200 ciclos</strong> — su negocio <strong>nunca se detiene</strong>.`},
+    'JETFLEX BRUSHLESS':{t:'🔋 Ventaja Jetflex Brushless',  p:`<strong>Menor tasa de mantenimiento del mercado</strong> y doble autonomía con no-breaks.`},
+    'LEGERO':           {t:'⚙ Ventaja Tecnología Legero',  p:`Sincronización perfecta motor-central con encoder patentado PPA. <strong>Velocidad y precisión</strong> en cada ciclo.`},
+  };
+  const v = ventajas[equipoSel.tec];
+  const vbox = document.getElementById('prop-ventaja');
+  if(v){ document.getElementById('pvt').textContent=v.t; document.getElementById('pvp').innerHTML=v.p; vbox.style.display='block'; }
+  else { vbox.style.display='none'; }
+
+  // SSG
+  document.getElementById('ssg-items').innerHTML = [
+    {s:`<strong>Situación:</strong> Su propiedad requiere seguridad, comodidad y tecnología de primera línea.`},
+    {s:`<strong>Solución:</strong> ${equipoSel.n} — tecnología ${equipoSel.tec}. Instalación profesional certificada, garantía respaldada por PPA Latinoamérica.`},
+    {s:`<strong>Garantía:</strong> Soporte técnico local, repuestos originales y mantenimiento preventivo programado. PPA Central siempre disponible.`},
+  ].map((i,idx)=>`<div class="ssg-item"><div class="ssg-dot">${idx+1}</div><div>${i.s}</div></div>`).join('');
+
+  // Guardar historial local + registrar en Bitrix24
+  (async()=>{
+    const cotID = generarID();
+    document.getElementById('consecBadge').textContent = cotID;
+    document.getElementById('ph-consec').textContent = `${cotID} · PPA Central`;
+    // Entry completamente serializable — solo strings y números
+    const entry = {
+      id:       String(cotID),
+      fecha:    new Date().toLocaleDateString('es-CO'),
+      hora:     new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}),
+      timestamp:new Date().toISOString(),
+      seg:      String(segActual?.code||''),
+      segNombre:String(segActual?.nombre||''),
+      equipo:   String(equipoSel.n||''),
+      tec:      String(equipoSel.tec||''),
+      total:    String(total||''),
+      lista:    String(listaPrecios||'final'),
+      cliente:{
+        nombre: String(nombre||''),
+        tel:    String(document.getElementById('c-tel').value||''),
+        ciudad: String(ciudad||''),
+        obs:    String(obs||''),
+        asesor: String(asesorSel?.nombre||'—'),
+      }
+    };
+    saveHist(entry);
+    await registrarEnBitrix(entry);
+  })();
+
+  document.getElementById('p4-vacia').style.display='none';
+  document.getElementById('p4-content').style.display='block';
+  document.getElementById('link-box').style.display='none';
+  linkActual='';
+  goStep(4);
+}
+
+// ══════════════════════════════════════
+// DEPARTAMENTOS Y MUNICIPIOS COLOMBIA
+// ══════════════════════════════════════
+const MUNICIPIOS = {
+  'Amazonas':['Leticia','Puerto Nariño','El Encanto','La Chorrera','La Pedrera','Tarapacá'],
+  'Antioquia':['Medellín','Bello','Itagüí','Envigado','Apartadó','Turbo','Rionegro','Caucasia','Montería','Carepa','Chigorodó','La Ceja','Marinilla','Sabaneta','Caldas','Copacabana','Girardota','Barbosa'],
+  'Arauca':['Arauca','Arauquita','Saravena','Tame','Fortul','Puerto Rondón','Cravo Norte'],
+  'Atlántico':['Barranquilla','Soledad','Malambo','Sabanalarga','Baranoa','Galapa','Manatí','Polonuevo','Ponedera','Puerto Colombia','Sabanagrande','Santo Tomás'],
+  'Bolívar':['Cartagena','Magangué','Turbaco','El Carmen de Bolívar','Mompós','Arjona','Villanueva','San Juan Nepomuceno','María La Baja'],
+  'Boyacá':['Tunja','Duitama','Sogamoso','Chiquinquirá','Paipa','Nobsa','Moniquirá','Ramiriquí','Garagoa'],
+  'Caldas':['Manizales','Villamaría','Chinchiná','Riosucio','Salamina','La Dorada','Aguadas','Anserma','Manzanares'],
+  'Caquetá':['Florencia','San Vicente del Caguán','Puerto Rico','El Doncello','La Montañita','Belén de los Andaquíes','Cartagena del Chairá','Curillo','El Paujil','Milán','Morelia','San José del Fragua','Solano','Solita','Valparaíso'],
+  'Casanare':['Yopal','Aguazul','Villanueva','Paz de Ariporo','Tauramena','Monterrey','Orocué','Trinidad','Hato Corozal'],
+  'Cauca':['Popayán','Santander de Quilichao','Puerto Tejada','Palmira','El Bordo','Silvia','Piendamó','Corinto'],
+  'Cesar':['Valledupar','Aguachica','Agustín Codazzi','Bosconia','Chiriguaná','El Copey','La Jagua de Ibirico','Curumaní','Pelaya'],
+  'Chocó':['Quibdó','Istmina','Riosucio','Tumaco','Bagadó','Cértegui','Condoto','Lloró','Tadó'],
+  'Córdoba':['Montería','Lorica','Sahagún','Montelíbano','Cereté','Ciénaga de Oro','Planeta Rica','Tierralta','Valencia'],
+  'Cundinamarca':['Bogotá D.C.','Soacha','Facatativá','Fusagasugá','Zipaquirá','Chía','Mosquera','Madrid','Funza','Girardot','Cajicá','La Calera','Sibaté','Tocancipá','Cota','Tabio','Sopó'],
+  'Guainía':['Inírida','Barranco Minas','Mapiripana','Puerto Colombia','San Felipe'],
+  'Guaviare':['San José del Guaviare','Calamar','El Retorno','Miraflores'],
+  'Huila':['Neiva','Pitalito','Garzón','La Plata','Campoalegre','Rivera','Palermo','Gigante','Isnos','San Agustín','Timánä'],
+  'La Guajira':['Riohacha','Maicao','Uribia','Manaure','Fonseca','Albania','Barrancas','Dibulla','Hatonuevo'],
+  'Magdalena':['Santa Marta','Ciénaga','Fundación','Plato','El Banco','Aracataca','Pivijay','Salamina'],
+  'Meta':['Villavicencio','Acacías','Granada','San Martín','Puerto López','Cumaral','Restrepo','Guamal','Barranca de Upía'],
+  'Nariño':['Pasto','Tumaco','Ipiales','Túquerres','La Unión','Samaniego','El Charco','Barbacoas'],
+  'Norte de Santander':['Cúcuta','Ocaña','Pamplona','Villa del Rosario','Los Patios','El Zulia','Tibú','Sardinata'],
+  'Putumayo':['Mocoa','Puerto Asís','Orito','Valle del Guamuez','Sibundoy','San Francisco','Villagarzón','Puerto Caicedo','Puerto Guzmán'],
+  'Quindío':['Armenia','Calarcá','Montenegro','Quimbaya','Circasia','Filandia','La Tebaida','Salento','Génova'],
+  'Risaralda':['Pereira','Dosquebradas','Santa Rosa de Cabal','La Virginia','Marsella','Belén de Umbría','Quinchía','Santuario'],
+  'San Andrés':['San Andrés','Providencia'],
+  'Santander':['Bucaramanga','Floridablanca','Girón','Piedecuesta','Barrancabermeja','Cúcuta','Socorro','San Gil','Vélez','Barbosa','Lebrija'],
+  'Sucre':['Sincelejo','Corozal','Tolú','Sampués','San Marcos','Montería','Morroa','Ovejas'],
+  'Tolima':['Ibagué','Espinal','Honda','Melgar','Chaparral','Líbano','Purificación','Ataco','Flandes'],
+  'Valle del Cauca':['Cali','Buenaventura','Palmira','Tulúa','Buga','Cartago','Manizales','Yumbo','Jamundí','Candelaria','Roldanillo','Sevilla','Zarzal','Dagua'],
+  'Vaupés':['Mitú','Carurú','Taraira','Yavaraté'],
+  'Vichada':['Puerto Carreño','La Primavera','Cumaribo','Santa Rosalía'],
+};
+
+function cargarMunicipios(){
+  const depto = document.getElementById('c-depto').value;
+  const sel   = document.getElementById('c-ciudad');
+  const munis = MUNICIPIOS[depto]||[];
+  sel.innerHTML = munis.length
+    ? munis.map(m=>`<option value="${m}">${m}</option>`).join('')
+    : '<option value="">Seleccione departamento…</option>';
+  // Preseleccionar Florencia si es Caquetá
+  if(depto==='Caquetá') sel.value='Florencia';
+}
+
+
+// ══════════════════════════════════════
+// DETECCIÓN AUTOMÁTICA DE SEGMENTO
+// ══════════════════════════════════════
+const SEGMENTOS = {
+  L01:{code:'L01',nombre:'Tu Casa, Tu Ritmo', color:'#005293',grad:'#00192E,#003A6B'},
+  L02:{code:'L02',nombre:'Tu Conjunto',        color:'#4D4F53',grad:'#1A1B1C,#3A3C3E'},
+  L03:{code:'L03',nombre:'Tu Negocio',         color:'#F15A22',grad:'#2A1000,#5A1E00'},
+  L04:{code:'L04',nombre:'Tu Industria',       color:'#981E32',grad:'#200008,#5A0018'},
+};
+
+function detectarSegmento(){
+  const lugar   = guiaRespuestas.lugar   || '';
+  const tipo    = guiaRespuestas.tipo    || '';
+  const trafico = guiaRespuestas.trafico || '';
+  if(caminoActual==='accesorios'||caminoActual==='seguridad') return SEGMENTOS.L03;
+  if(lugar==='casa')        return SEGMENTOS.L01;
+  if(lugar==='conjunto')    return SEGMENTOS.L02;
+  if(lugar==='negocio')     return SEGMENTOS.L03;
+  if(lugar==='parqueadero') return (trafico==='intenso'||trafico==='muy_intenso')?SEGMENTOS.L04:SEGMENTOS.L02;
+  if(lugar==='bodega')      return SEGMENTOS.L04;
+  if(tipo==='barrera')      return SEGMENTOS.L02;
+  if(tipo==='cortina'||tipo==='vidrio') return SEGMENTOS.L03;
+  return SEGMENTOS.L01;
+}
+
+// ══════════════════════════════════════
+// BITRIX24 — Registro automático de leads
+// ══════════════════════════════════════
+const BITRIX_HOOK = 'https://b24-4kxmmv.bitrix24.co/rest/1/yhxx3e3goq98d4di/';
+
+async function registrarEnBitrix(entry){
+  // En iOS desde archivo local (file://) el fetch a dominios externos falla
+  // Se registrará automáticamente cuando el cotizador esté publicado en HTTPS
+  if(location.protocol === 'file:'){
+    console.warn('Bitrix24: omitido en modo local — funcionará al publicar en línea');
+    return;
+  }
+  try{
+    const tel  = String(entry.cliente?.tel||'').replace(/\D/g,'');
+    const nombre   = String(entry.cliente?.nombre||'Sin nombre');
+    const ciudad   = String(entry.cliente?.ciudad||'');
+    const asesorN  = String(entry.cliente?.asesor||'—');
+    const cotID    = String(entry.id||'');
+    const equipo   = String(entry.equipo||'');
+    const tec      = String(entry.tec||'');
+    const lista    = String(entry.lista||'final');
+    const segN     = String(entry.segNombre||entry.seg||'');
+    const totalStr = String(entry.total||'').replace(/[^0-9]/g,'');
+
+    // 1. Crear Contacto
+    const contactoBody = new URLSearchParams();
+    contactoBody.append('fields[NAME]', nombre.split(' ')[0]||nombre);
+    contactoBody.append('fields[LAST_NAME]', nombre.split(' ').slice(1).join(' ')||'');
+    if(tel) contactoBody.append('fields[PHONE][0][VALUE]', `+57${tel}`);
+    contactoBody.append('fields[PHONE][0][VALUE_TYPE]', 'MOBILE');
+    contactoBody.append('fields[ADDRESS_CITY]', ciudad);
+    contactoBody.append('fields[COMMENTS]', `${cotID} · PPA Central · Asesor: ${asesorN}`);
+    contactoBody.append('fields[SOURCE_ID]', 'WEB');
+    contactoBody.append('fields[SOURCE_DESCRIPTION]', 'Cotizador PPA Central v9.5');
+
+    const respC = await fetch(`${BITRIX_HOOK}crm.contact.add`, {method:'POST', body:contactoBody});
+    const dataC = await respC.json();
+    const contactoId = dataC?.result||null;
+
+    // 2. Crear Negociación
+    const negBody = new URLSearchParams();
+    negBody.append('fields[TITLE]', `${cotID} — ${nombre} | ${equipo}`);
+    negBody.append('fields[OPPORTUNITY]', totalStr||'0');
+    negBody.append('fields[CURRENCY_ID]', 'COP');
+    negBody.append('fields[STAGE_ID]', 'NEW');
+    negBody.append('fields[SOURCE_ID]', 'WEB');
+    negBody.append('fields[SOURCE_DESCRIPTION]', 'Cotizador PPA Central v9.5');
+    negBody.append('fields[COMMENTS]',
+      `Segmento: ${segN}\nEquipo: ${equipo}\nTec: ${tec}\nCiudad: ${ciudad}\nAsesor: ${asesorN}\nLista: ${lista==='inst'?'Instalador':'Cliente final'}`
+    );
+    if(contactoId) negBody.append('fields[CONTACT_ID]', String(contactoId));
+
+    await fetch(`${BITRIX_HOOK}crm.deal.add`, {method:'POST', body:negBody});
+    showToast('✅ Lead registrado en Bitrix24');
+
+  } catch(e){
+    console.warn('Bitrix24 no disponible:', e.message||e);
+  }
+}
+
+// ══════════════════════════════════════
+// BUILD HTML PROPUESTA (para envío/descarga)
+// ══════════════════════════════════════
+function buildHTMLProp(){
+  const nombre = document.getElementById('c-nombre').value.trim()||'Cliente';
+  const ciudad = document.getElementById('c-ciudad').value.trim()||'Colombia';
+  const tipo   = document.getElementById('c-tipo').value||'Propiedad';
+  const total  = document.getElementById('prop-total-num').textContent;
+  const consec = document.getElementById('ph-consec').textContent;
+  const paq    = document.getElementById('pa-q').textContent;
+  const pap    = document.getElementById('pa-p').innerHTML;
+  const rows   = document.getElementById('prop-rows').innerHTML;
+  const vvis   = document.getElementById('prop-ventaja').style.display!=='none';
+  const vt     = document.getElementById('pvt').textContent;
+  const vp     = document.getElementById('pvp').innerHTML;
+  const ssg    = document.getElementById('ssg-items').innerHTML;
+  const fachada= fotoDataUrl||'';
+  const fecha  = new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long',day:'numeric'});
+  const esInst = listaPrecios==='inst';
+  const asesor = asesorSel||{nombre:'PPA Central',cargo:'Automatismos PPA',emoji:'🏠'};
+
+  // Segmento detectado automáticamente
+  const seg    = detectarSegmento();
+  const SC     = seg.color;   // Color principal del segmento
+  const SG     = seg.grad;    // Gradiente del hero
+  const SL     = seg.nombre;  // Nombre del segmento
+  const SK     = seg.code;    // Código L01-L04
+
+return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tu Sistema PPA Automatizado para ${nombre} — ${consec.split('·')[0].trim()}</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#060606;color:#fff;font-family:'Barlow',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.page{max-width:720px;margin:0 auto;}
+.hero{background:linear-gradient(150deg,${SG.split(',')[0]} 0%,${SG.split(',')[1]} 40%,#060606 100%);position:relative;overflow:hidden;border-bottom:1px solid #1E1E1E;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 92% 50%,${SC}38 0%,transparent 70%);}
+.hero::after{content:'PPA';position:absolute;right:-6px;top:-16px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:140px;color:rgba(255,255,255,.03);letter-spacing:-6px;pointer-events:none;}
+.h-in{padding:38px 32px 0;position:relative;z-index:1;}
+.h-consec{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${SC};margin-bottom:8px;font-weight:600;}
+.h-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:56px;line-height:.92;text-transform:uppercase;letter-spacing:-2px;}
+.h-title span{color:${SC};}
+.h-sub{font-size:13px;color:#555;margin-top:8px;font-weight:300;letter-spacing:.5px;}
+.h-bar{display:grid;grid-template-columns:1fr 1fr;padding:22px 32px 32px;border-top:1px solid rgba(255,255,255,.06);margin-top:24px;position:relative;z-index:1;}
+.hbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#555;margin-bottom:4px;}
+.hbv{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;}
+.hbs{font-size:12px;color:#555;margin-top:2px;}
+.fachada{width:100%;max-height:280px;object-fit:cover;display:block;}
+.body{padding:32px;}
+.asesor-row{display:flex;align-items:center;gap:14px;background:#111;border-radius:10px;padding:14px;margin-bottom:22px;border:1px solid #1E1E1E;}
+.af{width:52px;height:52px;border-radius:50%;background:#1A1A1A;border:2px solid ${SC};display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0;}
+.af img{width:100%;height:100%;object-fit:cover;}
+.an{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;}
+.ac{font-size:11px;color:#555;margin-top:2px;}
+.ae{font-size:11px;color:${SC};margin-top:3px;font-weight:600;}
+${esInst?'.iw{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;color:#FCD34D;}':''}
+.aida{border-left:3px solid ${SC};padding:20px 22px;background:linear-gradient(90deg,${SC}12 0%,transparent 100%);margin-bottom:24px;border-radius:0 10px 10px 0;}
+.aq{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;line-height:1.05;margin-bottom:10px;}
+.ap{font-size:14px;color:#AAA;line-height:1.75;}.ap strong{color:#fff;}.ap em{color:#666;font-size:12px;}
+.eq-card{background:#111;border-radius:10px;overflow:hidden;margin-bottom:22px;display:grid;grid-template-columns:130px 1fr;border:1px solid #1E1E1E;}
+.ei{width:130px;height:120px;background:#181818;display:flex;align-items:center;justify-content:center;font-size:48px;}
+.einfo{padding:18px 20px;}
+.en{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:.5px;}
+.et{display:inline-block;background:${SC}25;color:${SC};font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin:7px 0;}
+.ed{font-size:12px;color:#555;line-height:1.5;}.ed strong{color:${SC};}
+.sec{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:#444;margin:22px 0 10px;}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #141414;}
+.row:last-child{border-bottom:none;}
+.rn{font-size:14px;font-weight:600;}.rsku{font-size:9px;color:#444;margin-top:2px;}
+.rp{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;white-space:nowrap;}
+.total{background:${SC};border-radius:12px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;margin:22px 0;}
+.tl{font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.8;}.ts2{font-size:10px;opacity:.65;margin-top:3px;}
+.tm{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:46px;}
+.ventaja{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:10px;padding:16px 18px;margin-bottom:20px;}
+.vt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1.5px;color:#4ADE80;text-transform:uppercase;margin-bottom:6px;}
+.vp{font-size:13px;color:#777;line-height:1.65;}.vp strong{color:#4ADE80;}
+.ssg{background:linear-gradient(135deg,${SC}12 0%,${SC}06 100%);border:1px solid ${SC}30;border-radius:10px;padding:20px;margin-bottom:20px;}
+.ssg-t{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;margin-bottom:14px;}
+.si{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#888;line-height:1.6;margin-bottom:12px;}
+.si:last-child{margin-bottom:0;}
+.sd{width:24px;height:24px;border-radius:50%;background:${SC};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:2px;}
+.si strong{color:#fff;}
+.pend{background:#0E0E0E;border:1px solid #1A1A1A;border-radius:10px;padding:20px;margin-bottom:22px;}
+.pt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:${SC};margin-bottom:12px;}
+.pi{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #141414;font-size:13px;color:#BBB;}
+.pi:last-child{border-bottom:none;}
+.pd{width:18px;height:18px;border-radius:50%;background:${SC}25;border:1px solid ${SC}50;display:flex;align-items:center;justify-content:center;font-size:8px;color:${SC};flex-shrink:0;}
+.firma{display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #1A1A1A;padding-top:18px;margin-top:6px;}
+.fe{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:${SC};}
+.fd{font-size:10px;color:#555;line-height:2;margin-top:4px;}.fd a{color:${SC};text-decoration:none;}
+.fs{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:${SC};text-align:right;}
+.fsub{font-size:10px;color:#555;text-align:right;line-height:1.8;margin-top:2px;}
+.ffecha{font-size:9px;color:#333;text-align:right;margin-top:4px;}
+.seg-badge{display:inline-block;background:${SC};color:#fff;font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px;}
+.btn-print{display:block;width:100%;margin-top:22px;background:#1A1A1A;color:#AAA;border:1px solid #2A2A2A;border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;cursor:pointer;text-align:center;}
+.btn-print:hover{background:#2A2A2A;}
+@media print{.btn-print{display:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div class="h-in">
+      <div class="seg-badge">${SK} · ${SL}</div>
+      <div class="h-consec">${consec}</div>
+      <div class="h-title">${{
+        L01:`Tu Casa,<br><span>Ahora</span><br>Inteligente`,
+        L02:`Tu Conjunto,<br><span>Siempre</span><br>Seguro`,
+        L03:`Tu Negocio,<br><span>Sin</span><br>Interrupciones`,
+        L04:`Tu Industria,<br><span>Sin</span><br>Límites`
+      }[SK]||`Automatización<br><span>de Alta</span><br>Velocidad`}</div>
+      <div class="h-sub">Tecnología ${equipoSel.tec} · PPA Central · Distribuidor Autorizado PPA Latam</div>
+    </div>
+    <div class="h-bar">
+      <div><div class="hbl">Cliente</div><div class="hbv">${nombre}</div><div class="hbs">${tipo}</div></div>
+      <div style="text-align:right"><div class="hbl">Ubicación</div><div class="hbv">${ciudad}</div><div class="hbs">Colombia · ${fecha}</div></div>
+    </div>
+  </div>
+  ${fachada?`<img class="fachada" src="${fachada}" alt="Fachada ${nombre}">`:''}
+  <div class="body">
+    <div class="asesor-row">
+      <div class="af">${asesor.foto?`<img src="${asesor.foto}" alt="${asesor.nombre}">`:`<span>${asesor.emoji||'👤'}</span>`}</div>
+      <div><div class="an">${asesor.nombre}</div><div class="ac">${asesor.cargo}</div><div class="ae">PPA Central · Distribuidor Autorizado PPA Latam</div></div>
+    </div>
+    ${esInst?`<div class="iw">⚠ Lista precio instalador — Documento confidencial · No compartir con cliente final</div>`:''}
+    <div class="aida"><div class="aq">${paq}</div><div class="ap">${pap}</div></div>
+    <div class="eq-card">
+      <div class="ei"><span>${equipoSel.e}</span></div>
+      <div class="einfo">
+        <div class="en">${equipoSel.n}</div><span class="et">${equipoSel.tec}</span>
+        <div class="ed">${tipo} · ${ciudad}<br><strong>${equipoSel.vel?'⚡ '+equipoSel.vel+' · ':''} ${equipoSel.v||''} ${equipoSel.kg?'· '+equipoSel.kg+'kg':''}</strong></div>
+      </div>
+    </div>
+    <div class="sec">Equipamiento propuesto</div>
+    ${rows.replace(/class="prop-row"/g,'class="row"').replace(/class="prn"/g,'class="rn"').replace(/class="prsku"/g,'class="rsku"').replace(/class="prp"/g,'class="rp"')}
+    <div class="total">
+      <div><div class="tl">Total Equipos ★</div><div class="ts2">${esInst?'Precio instalador · Confidencial':'PSVP · Referencia usuario final · Sujeto a cambio'}</div></div>
+      <div class="tm">${total}</div>
+    </div>
+    ${vvis?`<div class="ventaja"><div class="vt">${vt}</div><div class="vp">${vp}</div></div>`:''}
+    <div class="ssg">
+      <div class="ssg-t">¿Por qué elegir PPA Central?</div>
+      ${ssg.replace(/class="ssg-item"/g,'class="si"').replace(/class="ssg-dot"/g,'class="sd"')}
+    </div>
+    <div class="pend">
+      <div class="pt">📋 Le haremos llegar hoy mismo</div>
+      <div class="pi"><div class="pd">✓</div>Costo de mano de obra de instalación</div>
+      <div class="pi"><div class="pd">✓</div>Materiales eléctricos requeridos</div>
+      <div class="pi"><div class="pd">✓</div>Materiales de ornamentación si aplica</div>
+    </div>
+    <div class="firma">
+      <div><div class="fe">PPA Central</div><div class="fd">Distribuidor Autorizado PPA Latam<br>🌐 <a href="https://ppacentral.com">ppacentral.com</a> · 📱 @ppacentral<br>📞 +57 317 777 2 333<br>📍 Calle 11A #17-44 · Florencia, Caquetá</div></div>
+      <div><div class="fs">#PPACentral</div><div class="fsub">Tu acceso a la mejor<br>tecnología PPA.<br>Siempre a tu servicio.</div><div class="ffecha">${fecha}</div></div>
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨 Imprimir / Guardar como PDF</button>
+  </div>
+</div>
+</body></html>`;
+}
+
+// ══════════════════════════════════════
+// DETECCIÓN DISPOSITIVO
+// ══════════════════════════════════════
+function esMobil(){
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
+// ══════════════════════════════════════
+// WHATSAPP — flujo diferenciado móvil / desktop
+// Móvil: Web Share API adjunta el archivo real
+// Desktop: descarga HTML + abre WhatsApp Web con mensaje
+// ══════════════════════════════════════
+async function publicarYEnviar(){
+  const btn = document.getElementById('btn-pub');
+  btn.textContent='⏳ Preparando...'; btn.disabled=true;
+
+  const html   = buildHTMLProp();
+  const nombre = document.getElementById('c-nombre').value.trim()||'Cliente';
+  const cotID  = document.getElementById('consecBadge').textContent;
+  const fname  = nombreArchivoMarketing(nombre, cotID)+'.html';
+  const ciudad = document.getElementById('c-ciudad').value.trim()||'';
+  const total  = document.getElementById('prop-total-num').textContent;
+  const asesor = asesorSel ? asesorSel.nombre : 'PPA Central';
+  const tel    = document.getElementById('c-tel').value.trim().replace(/\D/g,'');
+
+  const msgTexto =
+`🏠 *${nombre}* — su propuesta PPA está lista
+*${cotID}* · PPA Central
+
+⚙ *${equipoSel.n}*
+💰 *Inversión total: ${total}*
+📍 ${ciudad}
+
+📄 Abra el archivo adjunto en su navegador para ver la propuesta completa.
+
+_${asesor} · PPA Central_
+📞 +57 317 777 2 333 · ppacentral.com`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+
+  const waUrl = tel
+    ? `https://wa.me/57${tel}?text=${encodeURIComponent(msgTexto)}`
+    : `https://wa.me/?text=${encodeURIComponent(msgTexto)}`;
+
+  if(esMobil()){
+    // ── MÓVIL iOS/Android ──────────────────────────────────────
+    // Web Share API solo funciona en HTTPS — no en archivo local
+    const esHTTPS = location.protocol === 'https:';
+
+    if(esHTTPS && navigator.canShare){
+      const file = new File([blob], fname, {type:'text/html'});
+      if(navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({files:[file], text:msgTexto, title:`Propuesta PPA ${nombre}`});
+          showToast('✅ Propuesta compartida');
+          mostrarPanelPost(fname, true);
+          btn.textContent='📲 Enviar por WhatsApp'; btn.disabled=false;
+          return;
+        } catch(e){
+          if(e.name==='AbortError'){
+            btn.textContent='📲 Enviar por WhatsApp'; btn.disabled=false;
+            return;
+          }
+        }
+      }
+    }
+
+    // Fallback: abrir propuesta en nueva pestaña + WhatsApp por separado
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(()=>{
+      URL.revokeObjectURL(url);
+      window.open(waUrl, '_blank');
+    }, 1500);
+    mostrarPanelPost(fname, true);
+    showToast('📄 Propuesta abierta · Abriendo WhatsApp...');
+
+  } else {
+    // ── DESKTOP ────────────────────────────────────────────────
+    descargarBlob(blob, fname);
+    const waDesktop = tel
+      ? `https://web.whatsapp.com/send?phone=57${tel}&text=${encodeURIComponent(msgTexto)}`
+      : `https://web.whatsapp.com/`;
+    setTimeout(()=>{ window.open(waDesktop,'_blank'); }, 700);
+    mostrarPanelPost(fname, false);
+    showToast('⬇ HTML descargado · WhatsApp Web abierto');
+  }
+
+  btn.textContent='📲 Enviar por WhatsApp'; btn.disabled=false;
+}
+
+function descargarBlob(blob, fname){
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href=url; a.download=fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+
+function mostrarPanelPost(fname, esMov){
+  const instruccion = esMov
+    ? `La propuesta se abrió en una nueva pestaña. Desde ahí puede compartirla o guardarla.<br>WhatsApp se abre automáticamente con el mensaje listo.`
+    : `<strong style="color:var(--naranja)">1.</strong> Archivo <strong>${fname}</strong> descargado.<br>
+       <strong style="color:var(--naranja)">2.</strong> En WhatsApp Web: 📎 → Documentos → Descargas.<br>
+       <strong style="color:var(--verde)">✓</strong> El cliente lo abre en su navegador.`;
+  const box = document.getElementById('link-box');
+  box.innerHTML = `
+    <div class="lb-lbl">${esMov?'✅ Propuesta lista':'💻 Adjuntar en WhatsApp Web'}</div>
+    <div style="font-size:11px;color:#ccc;line-height:1.8;margin-bottom:9px">${instruccion}</div>
+    <div class="lb-btns">
+      <button class="lb-btn" onclick="publicarYEnviar()">📲 Reintentar</button>
+      <button class="lb-btn" onclick="verLink()">👁 Ver</button>
+      <button class="lb-btn" onclick="descargarHTML()">⬇ HTML</button>
+    </div>`;
+  box.style.display='block';
+}
+
+function reenviarWA(){ publicarYEnviar(); }
+
+function copiarLink(){
+  const tel = document.getElementById('c-tel').value.trim().replace(/\D/g,'');
+  if(tel){ navigator.clipboard.writeText(`+57${tel}`).then(()=>showToast('✅ Número copiado')).catch(()=>{}); }
+  else{ showToast('⚠ Sin número de teléfono'); }
+}
+
+function verLink(){
+  const html = buildHTMLProp();
+  const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
+// ══════════════════════════════════════
+// DESCARGA HTML
+// ══════════════════════════════════════
+function descargarHTML(){
+  const html   = buildHTMLProp();
+  const blob   = new Blob([html],{type:'text/html;charset=utf-8'});
+  const nombre = document.getElementById('c-nombre').value.trim()||'Cliente';
+  const cotID  = document.getElementById('consecBadge').textContent;
+  descargarBlob(blob, `${nombreArchivoMarketing(nombre,cotID)}.html`);
+  showToast('⬇ HTML descargado');
+}
+
+
+
+// ══════════════════════════════════════
+// PDF DIRECTO — html2canvas + jsPDF
+// Sin ventanas intermedias
+// ══════════════════════════════════════
+async function imprimirPDF(){
+  const btn = document.querySelector('.btn-sec[onclick="imprimirPDF()"]');
+  if(btn){ btn.textContent='⏳ Generando PDF...'; btn.disabled=true; }
+  showToast('⏳ Generando PDF…');
+
+  try{
+    // Cargar librerías desde CDN
+    await Promise.all([
+      cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
+      cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    ]);
+
+    const nombre = document.getElementById('c-nombre').value.trim()||'Cliente';
+    const consec = document.getElementById('ph-consec').textContent.split('·')[0].trim();
+    const fname  = nombreArchivoMarketing(nombre,consec);
+
+    // Renderizar la propuesta en un iframe oculto
+    const html = buildHTMLProp();
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:720px;height:1px;border:none;';
+    document.body.appendChild(iframe);
+
+    await new Promise(res=>{
+      iframe.onload = res;
+      iframe.srcdoc = html;
+    });
+
+    // Esperar que cargue el contenido
+    await new Promise(res=>setTimeout(res,1200));
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    const canvas = await html2canvas(doc.body,{
+      scale:2, useCORS:true, backgroundColor:'#060606',
+      width:720, windowWidth:720
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pW  = pdf.internal.pageSize.getWidth();   // 210mm
+    const pH  = pdf.internal.pageSize.getHeight();  // 297mm
+
+    // Convertir canvas a imagen
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const canvasW = canvas.width;
+    const canvasH = canvas.height;
+
+    // Altura total de la imagen en mm al escalar al ancho de página
+    const imgHmm = (canvasH / canvasW) * pW;
+
+    let yOffset = 0; // posición en mm dentro de la imagen ya renderizada
+    let pageCount = 0;
+
+    while(yOffset < imgHmm){
+      if(pageCount > 0) pdf.addPage();
+      // Posición Y negativa para "recortar" la parte ya colocada
+      pdf.addImage(imgData, 'JPEG', 0, -yOffset, pW, imgHmm);
+      yOffset += pH;
+      pageCount++;
+    }
+
+    pdf.save(`${fname}.pdf`);
+    document.body.removeChild(iframe);
+    showToast('✅ PDF descargado');
+  } catch(err){
+    console.error('PDF error:',err);
+    // Fallback: descarga HTML con botón imprimir integrado
+    showToast('⚠ Usando fallback — descargando HTML imprimible');
+    descargarHTML();
+  }
+
+  if(btn){ btn.textContent='🖨 PDF'; btn.disabled=false; }
+}
+
+function cargarScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)){ res(); return; }
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+// ══════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════
+function abrirHist(){ document.getElementById('hist-ov').classList.add('open'); renderHist(); }
+function cerrarHist(){ document.getElementById('hist-ov').classList.remove('open'); }
+
+function renderHist(){
+  const hist = JSON.parse(localStorage.getItem('ppa_hist')||'[]');
+  const el   = document.getElementById('hist-list');
+  if(!hist.length){ el.innerHTML='<div class="hist-empty">📭 Sin cotizaciones aún.</div>'; return; }
+  el.innerHTML = hist.map(h=>`
+    <div class="hist-item">
+      <div class="hi-top">
+        <div>
+          <div class="hi-consec">${h.id}</div>
+          <div class="hi-cliente">${h.cliente?.nombre||'Sin nombre'}</div>
+          <div class="hi-mid">${h.equipo||'—'} · ${h.cliente?.asesor||'—'}</div>
+          ${h.seg?`<span class="hi-seg" style="background:${SEG_COLORS[h.seg]||'#4D4F53'}">${h.seg} ${h.segNombre||''}</span>`:''}
+        </div>
+        <div style="text-align:right">
+          <div class="hi-total">${fmtCOP(h.total||0)}</div>
+          <button class="hi-del" onclick="delHist('${h.id}',event)">🗑</button>
+        </div>
+      </div>
+      <div class="hi-bot">
+        <span>📍 ${h.cliente?.ciudad||'—'} · ${h.lista==='inst'?'💼 Inst.':'👤 Final'}</span>
+        <span>${h.fecha||''} ${h.hora||''}</span>
+      </div>
+    </div>`).join('');
+}
+
+function delHist(id, e){
+  e.stopPropagation();
+  try{
+    let h = JSON.parse(localStorage.getItem('ppa_hist')||'[]');
+    h = h.filter(i=>i.id!==id);
+    localStorage.setItem('ppa_hist', JSON.stringify(h));
+    renderHist(); showToast('Eliminada');
+  }catch{}
+}
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function nuevaCot(){
+  equipoSel=null; accSel=new Set(); accQty={}; fotoDataUrl=null; asesorSel=null; linkActual='';
+  guiaRespuestas={}; guiaPasoActual=0;
+  document.getElementById('foto-prev-img').style.display='none';
+  document.querySelector('.foto-drop').style.display='block';
+  document.getElementById('p4-vacia').style.display='block';
+  document.getElementById('p4-content').style.display='none';
+  document.querySelectorAll('.asesor-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.seg-btn').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('consecBadge').textContent = generarID();
+  goStep(1);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+// INIT
+init();
+</script>
+</body>
+</html>
